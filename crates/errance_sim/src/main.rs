@@ -106,6 +106,18 @@ fn main() {
             quality: Quality::Good,
         },
         Build {
+            name: "Aguerri T5 (épée + bouclier + cuir)",
+            items: vec![("epee_longue", 5), ("bouclier_rond", 5), ("capuche", 5), ("brigandine", 5), ("bottes", 5), ("potion_soin", 5)],
+            mastery: 40.0,
+            quality: Quality::Remarkable,
+        },
+        Build {
+            name: "Expert T6 (bâton sacré + tissu)",
+            items: vec![("baton_sacre", 6), ("chapeau_pointu", 6), ("robe", 6), ("sandales", 6), ("potion_soin", 6)],
+            mastery: 55.0,
+            quality: Quality::Excellent,
+        },
+        Build {
             name: "Vétéran T8 (hache + plaques)",
             items: vec![("grande_hache", 8), ("casque_cornes", 8), ("plastron", 8), ("solerets", 8), ("cape_guerre", 8)],
             mastery: 100.0,
@@ -123,6 +135,15 @@ fn main() {
         ("ours_brun", 1),
         ("gerald_le_borgne", 1),
         ("troll_des_marais", 1),
+        ("loup_des_neiges", 2),
+        ("golem_de_givre", 1),
+        ("bete_de_givrecol", 1),
+        ("chevalier_dechu", 2),
+        ("roi_sans_couronne", 1),
+        ("cultiste_braise", 2),
+        ("wyrm_de_cendre", 1),
+        ("chevalier_du_neant", 2),
+        ("devoreur", 1),
     ];
     println!("Simulateur Errance — {n_fights} combats par duel\n");
     for b in &builds {

@@ -362,6 +362,17 @@ impl World {
                 traits.push(t);
             }
         }
+        // Les traits changent la façon de se battre.
+        if traits.contains(&Trait::Coward) {
+            sheet.rules.insert(0, Rule::new(Condition::SelfHpBelow(0.3), Action::Retreat));
+        }
+        if traits.contains(&Trait::Careful) {
+            sheet.rules.retain(|r| r.then != Action::Use(SkillSlot::Potion));
+            sheet.rules.insert(0, Rule::new(Condition::SelfHpBelow(0.55), Action::Use(SkillSlot::Potion)));
+        }
+        if traits.contains(&Trait::Reckless) {
+            sheet.rules.retain(|r| r.then != Action::Retreat);
+        }
         let id = self.next_id;
         self.next_id += 1;
         self.npcs.push(Npc {
