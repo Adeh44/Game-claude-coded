@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Lame -->
+    <path android:fillColor="#D9DEE3" android:pathData="M52,26 L56,26 L57,64 L51,64 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,22 L56,26 L52,26 Z" />
+    <!-- Garde -->
+    <path android:fillColor="#C9A227" android:pathData="M42,64 L66,64 L66,68 L42,68 Z" />
+    <!-- Poignée -->
+    <path android:fillColor="#6B4226" android:pathData="M52,68 L56,68 L56,80 L52,80 Z" />
+    <path android:fillColor="#C9A227" android:pathData="M51,80 L57,80 L57,84 L51,84 Z" />
+</vector>

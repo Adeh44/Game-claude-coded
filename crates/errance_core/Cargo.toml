@@ -1,0 +1,10 @@
+[package]
+name = "errance_core"
+description = "Règles du jeu Errance : aucune dépendance au moteur, tout est testable."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+ron.workspace = true

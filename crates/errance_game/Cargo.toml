@@ -1,0 +1,21 @@
+[package]
+name = "errance_game"
+description = "Le jeu Errance : rendu 3D, tactile, interface (Bevy)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "errance_game"
+crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "errance"
+path = "src/main.rs"
+
+[dependencies]
+errance_core.workspace = true
+bevy = { workspace = true, features = ["3d", "ui", "audio", "wav"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+bevy = { workspace = true, features = ["3d", "ui", "audio", "wav", "android-game-activity"] }

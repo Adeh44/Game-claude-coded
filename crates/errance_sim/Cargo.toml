@@ -1,0 +1,9 @@
+[package]
+name = "errance_sim"
+description = "Simulateur d'équilibrage : lance des milliers de combats sans écran."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+errance_core.workspace = true

@@ -1,0 +1,11 @@
+[versions]
+agp = "8.4.0"
+appcompat = "1.6.1"
+gamesActivity = "4.4.0" # Doit rester compatible avec le crate `android-activity` utilisé par Bevy.
+
+[libraries]
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+games-activity = { group = "androidx.games", name = "games-activity", version.ref = "gamesActivity" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }

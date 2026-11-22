@@ -1,0 +1,27 @@
+[workspace]
+resolver = "3"
+members = ["crates/errance_core", "crates/errance_game", "crates/errance_sim"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+ron = "0.12"
+bevy = { version = "0.20.1", default-features = false }
+errance_core = { path = "crates/errance_core" }
+
+# Compile les dépendances optimisées même en debug : Bevy est très lent sinon.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+opt-level = 3
