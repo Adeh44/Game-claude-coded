@@ -114,6 +114,51 @@ pub struct ChoreDef {
     pub difficulty: f32,
 }
 
+/// Groupe de monstres qu'on peut croiser dans une zone.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Pack {
+    pub enemies: Vec<(String, u32)>,
+    #[serde(default = "one")]
+    pub weight: f32,
+}
+
+/// Une zone d'expédition.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ZoneDef {
+    pub id: String,
+    pub name: String,
+    pub tier: u8,
+    pub description: String,
+    /// Couleur du sol, des arbres, des rochers.
+    pub ground: Rgb,
+    pub foliage: Rgb,
+    pub rock: Rgb,
+    /// Densité de décor (arbres pour 100 m²).
+    #[serde(default = "one")]
+    pub trees: f32,
+    /// Type d'arbre : "feuillu", "sapin", "mort", "saule".
+    #[serde(default)]
+    pub tree_kind: String,
+    pub packs: Vec<Pack>,
+    /// Nombre de groupes de monstres.
+    pub pack_count: u32,
+    #[serde(default)]
+    pub boss: Option<String>,
+    /// Demi-largeur de la zone (m).
+    #[serde(default = "zone_size")]
+    pub size: f32,
+    /// Couleur du ciel / brouillard.
+    #[serde(default = "sky")]
+    pub sky: Rgb,
+}
+
+fn zone_size() -> f32 {
+    34.0
+}
+fn sky() -> Rgb {
+    (0.62, 0.72, 0.8)
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct NameLists {
     pub male: Vec<String>,
@@ -133,6 +178,7 @@ pub struct Content {
     pub uniques: Vec<UniqueDef>,
     pub enemies: Vec<EnemyDef>,
     pub chores: Vec<ChoreDef>,
+    pub zones: Vec<ZoneDef>,
     pub names: NameLists,
     line_idx: HashMap<String, usize>,
     skill_idx: HashMap<String, usize>,
@@ -164,6 +210,7 @@ const AFFIX_FILES: &[(&str, &str)] = files!["affixes.ron"];
 const UNIQUE_FILES: &[(&str, &str)] = files!["uniques.ron"];
 const ENEMY_FILES: &[(&str, &str)] = files!["ennemis.ron"];
 const CHORE_FILES: &[(&str, &str)] = files!["corvees.ron"];
+const ZONE_FILES: &[(&str, &str)] = files!["zones.ron"];
 const NAMES: &str = include_str!("../content/noms.ron");
 
 fn parse_all<T: for<'de> Deserialize<'de>>(files: &[(&str, &str)], errors: &mut Vec<String>) -> Vec<T> {
@@ -199,6 +246,7 @@ impl Content {
         let uniques: Vec<UniqueDef> = parse_all(UNIQUE_FILES, &mut errors);
         let enemies: Vec<EnemyDef> = parse_all(ENEMY_FILES, &mut errors);
         let chores: Vec<ChoreDef> = parse_all(CHORE_FILES, &mut errors);
+        let zones: Vec<ZoneDef> = parse_all(ZONE_FILES, &mut errors);
         let names = match ron::from_str::<NameLists>(NAMES) {
             Ok(n) => n,
             Err(e) => {
@@ -222,6 +270,7 @@ impl Content {
             uniques,
             enemies,
             chores,
+            zones,
             names,
             line_idx,
             skill_idx,
@@ -287,6 +336,20 @@ impl Content {
                 }
             }
         }
+        for z in &self.zones {
+            for p in &z.packs {
+                for (id, _) in &p.enemies {
+                    if self.enemy(id).is_none() {
+                        e.push(format!("zone {} : ennemi inconnu {}", z.id, id));
+                    }
+                }
+            }
+            if let Some(b) = &z.boss {
+                if self.enemy(b).is_none() {
+                    e.push(format!("zone {} : boss inconnu {}", z.id, b));
+                }
+            }
+        }
         // Chaque voie d'arme a au moins un skill par emplacement d'arme.
         for l in self.lines.iter().filter(|l| l.category == LineCategory::Weapon) {
             for slot in [SkillSlot::Basic, SkillSlot::Weapon1, SkillSlot::Weapon2, SkillSlot::Weapon3] {
@@ -329,6 +392,10 @@ impl Content {
     pub fn enemy(&self, id: &str) -> Option<&EnemyDef> {
         self.enemy_idx.get(id).map(|&i| &self.enemies[i])
     }
+    pub fn zone(&self, id: &str) -> Option<&ZoneDef> {
+        self.zones.iter().find(|z| z.id == id)
+    }
+
     pub fn chore(&self, id: &str) -> Option<&ChoreDef> {
         self.chores.iter().find(|c| c.id == id)
     }
