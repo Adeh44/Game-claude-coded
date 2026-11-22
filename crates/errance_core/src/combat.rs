@@ -428,6 +428,22 @@ impl Combat {
         id
     }
 
+    /// Met à jour un combattant après un changement de fiche (niveau gagné,
+    /// équipement changé) sans toucher à sa vie en pourcentage.
+    pub fn refresh(&mut self, id: FighterId, spec: &FighterSpec) {
+        let Some(i) = self.idx(id) else { return };
+        let f = &mut self.fighters[i];
+        let frac = f.hp_frac();
+        f.base = spec.stats.clone();
+        f.skills = spec.skills.clone();
+        f.passives = spec.passives.clone();
+        f.passive_cds = vec![0.0; f.passives.len()];
+        f.look = spec.look.clone();
+        self.recompute_stats(i);
+        let f = &mut self.fighters[i];
+        f.hp = frac * f.stats.get(Stat::MaxHp);
+    }
+
     pub fn idx(&self, id: FighterId) -> Option<usize> {
         self.fighters.iter().position(|f| f.id == id)
     }
