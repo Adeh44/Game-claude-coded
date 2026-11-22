@@ -15,6 +15,11 @@
 - Polices embarquées (accents français). Pas d'asset externe obligatoire.
 - Versions : v0.1, v0.2… C'est Adeh qui déclare la v1.0.
 
+## Outils de test sans téléphone
+- Captures : variables `ERRANCE_SCREENSHOT`, `ERRANCE_FRAMES`, `ERRANCE_DEMO` (voir `demo_driver`).
+- Clics réels : script `play.sh` (Xvfb + xdotool) dans le scratchpad de la session (à recréer : lance le jeu, clique aux coordonnées, `import` pour capturer).
+- Sons : `ERRANCE_DUMP_AUDIO=dossier` écrit la musique en .wav.
+
 ## Routine git
 1. `git status` + `git diff --stat` lus.
 2. `git add -A && git commit -m "vX.Y : …" && git push -u origin claude/mobile-rpg-game-design-o55gg9`, lire la ligne de retour.
@@ -25,3 +30,9 @@
 | `bevy@0.20.1 requires rustc 1.97.1` | Rust du conteneur trop vieux | `rustup update stable` avant le premier build |
 | `dl.google.com` refusé (403 proxy) | Réseau du conteneur : pas de SDK Android ici | L'APK se construit uniquement sur GitHub Actions |
 | Build Bevy > 10 min | Première compilation complète | Lancer en arrière-plan, coder le core pendant ce temps |
+| `git push` → 403 « Claude doesn't have GitHub access » | App Claude GitHub pas installée sur le dépôt | Adeh : claude.ai/connect-github ; en attendant, commits locaux |
+| Panique B0002 au lancement | Un système avec `Res<X>` ET `ResMut<X>` | Un seul `ResMut<X>` par système |
+| Panique « duplicate components » | Un bundle contenant deux `Node` (bouton + position) | Envelopper dans un nœud parent |
+| Symboles (★ ✓ ◇ 🔒 ⟳) invisibles | Absents de la police Alegreya Sans | Rester en texte simple (*, ok, -, (verrou)) |
+| Le jeu panique sous Xvfb : `libxkbcommon-x11.so` | Lib manquante dans le conteneur | `apt-get install libxkbcommon-x11-0` |
+| Bouton qui n'agit pas sur le skill | Les boutons de skill doivent réagir à l'appui | `ActivateOnPress` (`ui::instant()`) |
