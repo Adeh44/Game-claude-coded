@@ -1,0 +1,145 @@
+// Armes et mains secondaires. Les stats sont celles du tier 1, qualité
+// ordinaire : elles grandissent avec le tier, la qualité et votre maîtrise.
+// Modificateur : (stat: X, kind: Flat ou Percent, value: v)
+[
+    // ---------- Masses & gourdins ----------
+    (id: "gourdin_rouille", name: "Gourdin", slot: MainHand, line: "masse", material: Wood, basic: "coup_de_masse",
+     model: "gourdin", min_tier: 1, max_tier: 2, weight: 2.0,
+     description: "Un bout de bois avec un clou. Mieux que rien.",
+     mods: [(stat: PhysicalPower, kind: Flat, value: 4.0), (stat: ThreatMult, kind: Flat, value: 0.1)]),
+    (id: "masse", name: "Masse", slot: MainHand, line: "masse", material: Metal, basic: "coup_de_masse",
+     model: "masse", min_tier: 2,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 5.0), (stat: Armor, kind: Flat, value: 4.0), (stat: ThreatMult, kind: Flat, value: 0.2)]),
+    (id: "morgenstern", name: "Morgenstern", slot: MainHand, line: "masse", material: Metal, basic: "coup_de_masse",
+     model: "morgenstern", two_handed: true, min_tier: 3,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 8.0), (stat: MaxHp, kind: Flat, value: 15.0), (stat: ThreatMult, kind: Flat, value: 0.3)]),
+
+    // ---------- Épées ----------
+    (id: "epee_courte", name: "Épée courte", slot: MainHand, line: "epee", material: Metal, basic: "taille",
+     model: "epee", weight: 1.5,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 6.0)]),
+    (id: "epee_longue", name: "Épée longue", slot: MainHand, line: "epee", material: Metal, basic: "taille",
+     model: "epee_longue", min_tier: 2,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 7.0), (stat: CritChance, kind: Flat, value: 0.03)]),
+    (id: "claymore", name: "Claymore", slot: MainHand, line: "epee", material: Metal, basic: "taille",
+     model: "claymore", two_handed: true, min_tier: 3,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 10.0), (stat: CritDamage, kind: Flat, value: 0.15)]),
+
+    // ---------- Haches ----------
+    (id: "hachette", name: "Hachette", slot: MainHand, line: "hache", material: Metal, basic: "fendoir",
+     model: "hache", weight: 1.5,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 6.0), (stat: Lifesteal, kind: Flat, value: 0.02)]),
+    (id: "grande_hache", name: "Grande hache", slot: MainHand, line: "hache", material: Metal, basic: "fendoir",
+     model: "grande_hache", two_handed: true, min_tier: 2,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 10.0), (stat: Lifesteal, kind: Flat, value: 0.05)]),
+
+    // ---------- Lances ----------
+    (id: "fourche", name: "Fourche", slot: MainHand, line: "lance", material: Wood, basic: "pique",
+     model: "fourche", two_handed: true, max_tier: 1, weight: 1.0,
+     description: "Un outil de ferme. Pique quand même.",
+     mods: [(stat: PhysicalPower, kind: Flat, value: 5.0)]),
+    (id: "lance", name: "Lance", slot: MainHand, line: "lance", material: Wood, basic: "pique",
+     model: "lance", two_handed: true,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 8.0), (stat: MoveSpeed, kind: Flat, value: 0.2)]),
+    (id: "hallebarde", name: "Hallebarde", slot: MainHand, line: "lance", material: Metal, basic: "pique",
+     model: "hallebarde", two_handed: true, min_tier: 3,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 10.0), (stat: Armor, kind: Flat, value: 6.0)]),
+
+    // ---------- Dagues ----------
+    (id: "couteau", name: "Couteau", slot: MainHand, line: "dague", material: Metal, basic: "frappe_rapide",
+     model: "dague", max_tier: 2, weight: 1.5,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 4.0), (stat: CritChance, kind: Flat, value: 0.05)]),
+    (id: "dague", name: "Dague", slot: MainHand, line: "dague", material: Metal, basic: "frappe_rapide",
+     model: "dague", min_tier: 2,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 5.0), (stat: CritChance, kind: Flat, value: 0.07), (stat: DodgeChance, kind: Flat, value: 0.03)]),
+    (id: "lames_jumelles", name: "Lames jumelles", slot: MainHand, line: "dague", material: Metal, basic: "frappe_rapide",
+     model: "dagues_jumelles", two_handed: true, min_tier: 3,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 8.0), (stat: CritChance, kind: Flat, value: 0.1), (stat: AttackSpeed, kind: Flat, value: 0.1)]),
+
+    // ---------- Marteaux ----------
+    (id: "marteau_de_guerre", name: "Marteau de guerre", slot: MainHand, line: "marteau", material: Metal, basic: "coup_de_marteau",
+     model: "marteau", two_handed: true,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 9.0), (stat: MaxHp, kind: Flat, value: 20.0), (stat: ThreatMult, kind: Flat, value: 0.4)]),
+
+    // ---------- Arcs ----------
+    (id: "arc_court", name: "Arc court", slot: MainHand, line: "arc", material: Wood, basic: "tir",
+     model: "arc", two_handed: true, weight: 1.5,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 6.0), (stat: AttackSpeed, kind: Flat, value: 0.05)]),
+    (id: "arc_long", name: "Arc long", slot: MainHand, line: "arc", material: Wood, basic: "tir",
+     model: "arc_long", two_handed: true, min_tier: 3,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 9.0), (stat: CritChance, kind: Flat, value: 0.05)]),
+
+    // ---------- Arbalètes ----------
+    (id: "arbalete", name: "Arbalète", slot: MainHand, line: "arbalete", material: Wood, basic: "carreau",
+     model: "arbalete", two_handed: true,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 8.0)]),
+    (id: "arbalete_lourde", name: "Arbalète lourde", slot: MainHand, line: "arbalete", material: Metal, basic: "carreau",
+     model: "arbalete_lourde", two_handed: true, min_tier: 3,
+     mods: [(stat: PhysicalPower, kind: Flat, value: 11.0), (stat: CritDamage, kind: Flat, value: 0.2)]),
+
+    // ---------- Feu ----------
+    (id: "baguette_feu", name: "Baguette de braise", slot: MainHand, line: "feu", material: Wood, basic: "trait_de_feu",
+     model: "baguette", weight: 1.2,
+     mods: [(stat: MagicPower, kind: Flat, value: 5.0), (stat: MaxEnergy, kind: Flat, value: 5.0)]),
+    (id: "baton_feu", name: "Bâton de feu", slot: MainHand, line: "feu", material: Wood, basic: "trait_de_feu",
+     model: "baton_feu", two_handed: true,
+     mods: [(stat: MagicPower, kind: Flat, value: 8.0), (stat: MaxEnergy, kind: Flat, value: 12.0)]),
+
+    // ---------- Givre ----------
+    (id: "baguette_givre", name: "Baguette de givre", slot: MainHand, line: "givre", material: Wood, basic: "eclat_de_givre",
+     model: "baguette", weight: 1.2,
+     mods: [(stat: MagicPower, kind: Flat, value: 5.0), (stat: MaxEnergy, kind: Flat, value: 5.0)]),
+    (id: "baton_givre", name: "Bâton de givre", slot: MainHand, line: "givre", material: Wood, basic: "eclat_de_givre",
+     model: "baton_givre", two_handed: true,
+     mods: [(stat: MagicPower, kind: Flat, value: 7.0), (stat: MaxEnergy, kind: Flat, value: 12.0), (stat: ControlPower, kind: Flat, value: 0.05)]),
+
+    // ---------- Arcane ----------
+    (id: "baguette_arcane", name: "Baguette arcanique", slot: MainHand, line: "arcane", material: Wood, basic: "projectile_arcanique",
+     model: "baguette",
+     mods: [(stat: MagicPower, kind: Flat, value: 5.0), (stat: Haste, kind: Flat, value: 0.03)]),
+    (id: "baton_arcane", name: "Bâton arcanique", slot: MainHand, line: "arcane", material: Wood, basic: "projectile_arcanique",
+     model: "baton_arcane", two_handed: true,
+     mods: [(stat: MagicPower, kind: Flat, value: 7.0), (stat: MaxEnergy, kind: Flat, value: 15.0), (stat: EnergyRegen, kind: Flat, value: 0.5)]),
+
+    // ---------- Sacré ----------
+    (id: "sceptre_sacre", name: "Sceptre sacré", slot: MainHand, line: "sacre", material: Metal, basic: "eclat_sacre",
+     model: "sceptre",
+     mods: [(stat: HealPower, kind: Flat, value: 5.0), (stat: MaxEnergy, kind: Flat, value: 5.0)]),
+    (id: "baton_sacre", name: "Bâton sacré", slot: MainHand, line: "sacre", material: Wood, basic: "eclat_sacre",
+     model: "baton_sacre", two_handed: true,
+     mods: [(stat: HealPower, kind: Flat, value: 8.0), (stat: MagicPower, kind: Flat, value: 2.0), (stat: MaxEnergy, kind: Flat, value: 15.0)]),
+
+    // ---------- Nature ----------
+    (id: "baguette_nature", name: "Rameau sauvage", slot: MainHand, line: "nature", material: Wood, basic: "epine",
+     model: "baguette",
+     mods: [(stat: HealPower, kind: Flat, value: 4.0), (stat: MagicPower, kind: Flat, value: 2.0)]),
+    (id: "baton_nature", name: "Bâton de nature", slot: MainHand, line: "nature", material: Wood, basic: "epine",
+     model: "baton_nature", two_handed: true,
+     mods: [(stat: HealPower, kind: Flat, value: 7.0), (stat: MagicPower, kind: Flat, value: 4.0), (stat: HpRegen, kind: Flat, value: 0.5)]),
+
+    // ---------- Maudit ----------
+    (id: "baguette_maudite", name: "Os gravé", slot: MainHand, line: "maudit", material: Wood, basic: "trait_d_ombre",
+     model: "baguette",
+     mods: [(stat: MagicPower, kind: Flat, value: 5.0)]),
+    (id: "baton_maudit", name: "Bâton maudit", slot: MainHand, line: "maudit", material: Wood, basic: "trait_d_ombre",
+     model: "baton_maudit", two_handed: true,
+     mods: [(stat: MagicPower, kind: Flat, value: 8.0), (stat: ControlPower, kind: Flat, value: 0.08), (stat: Lifesteal, kind: Flat, value: 0.03)]),
+
+    // ---------- Mains secondaires ----------
+    (id: "bouclier_rond", name: "Bouclier rond", slot: OffHand, line: "bouclier", material: Wood,
+     model: "bouclier_rond", weight: 1.5,
+     mods: [(stat: Armor, kind: Flat, value: 8.0), (stat: BlockChance, kind: Flat, value: 0.08), (stat: MaxHp, kind: Flat, value: 10.0)]),
+    (id: "ecu", name: "Écu", slot: OffHand, line: "bouclier", material: Metal,
+     model: "ecu", min_tier: 3,
+     mods: [(stat: Armor, kind: Flat, value: 12.0), (stat: BlockChance, kind: Flat, value: 0.12), (stat: ThreatMult, kind: Flat, value: 0.2)]),
+    (id: "tome", name: "Tome", slot: OffHand, line: "tome", material: Leather,
+     model: "tome",
+     mods: [(stat: MagicPower, kind: Flat, value: 3.0), (stat: Haste, kind: Flat, value: 0.04), (stat: MaxEnergy, kind: Flat, value: 8.0)]),
+    (id: "torche", name: "Torche", slot: OffHand, line: "torche", material: Wood,
+     model: "torche", weight: 2.0,
+     description: "Éclaire le chemin. Les porteurs en ont toujours une.",
+     mods: [(stat: MaxEnergy, kind: Flat, value: 6.0), (stat: EnergyRegen, kind: Flat, value: 0.4), (stat: MagicPower, kind: Flat, value: 1.0)]),
+    (id: "orbe", name: "Orbe", slot: OffHand, line: "orbe", material: Jewel,
+     model: "orbe",
+     mods: [(stat: HealPower, kind: Flat, value: 3.0), (stat: ShieldPower, kind: Flat, value: 0.1), (stat: MaxEnergy, kind: Flat, value: 6.0)]),
+]

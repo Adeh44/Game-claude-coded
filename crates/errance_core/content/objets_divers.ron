@@ -1,0 +1,35 @@
+// Capes, bijoux, potions et repas.
+[
+    (id: "cape_voyage", name: "Cape de voyage", slot: Cape, material: Cloth, model: "cape", weight: 1.5,
+     mods: [(stat: MaxHp, kind: Flat, value: 8.0), (stat: HpRegen, kind: Flat, value: 0.3)]),
+    (id: "cape_guerre", name: "Cape de guerre", slot: Cape, material: Cloth, model: "cape", min_tier: 2,
+     mods: [(stat: MaxHp, kind: Flat, value: 10.0), (stat: PhysicalPower, kind: Flat, value: 1.5)]),
+    (id: "cape_mage", name: "Cape d'érudit", slot: Cape, material: Cloth, model: "cape", min_tier: 2,
+     mods: [(stat: MaxEnergy, kind: Flat, value: 8.0), (stat: MagicPower, kind: Flat, value: 1.5)]),
+
+    (id: "pendentif", name: "Pendentif", slot: Amulet, material: Jewel, model: "amulette",
+     mods: [(stat: PhysicalPower, kind: Flat, value: 2.0)]),
+    (id: "talisman", name: "Talisman", slot: Amulet, material: Jewel, model: "amulette",
+     mods: [(stat: MagicPower, kind: Flat, value: 2.0)]),
+    (id: "medaillon", name: "Médaillon", slot: Amulet, material: Jewel, model: "amulette",
+     mods: [(stat: HealPower, kind: Flat, value: 2.0)]),
+    (id: "anneau", name: "Anneau", slot: Ring, material: Jewel, model: "anneau",
+     mods: [(stat: CritChance, kind: Flat, value: 0.02)]),
+    (id: "chevaliere", name: "Chevalière", slot: Ring, material: Jewel, model: "anneau",
+     mods: [(stat: Armor, kind: Flat, value: 4.0), (stat: MagicResist, kind: Flat, value: 4.0)]),
+
+    (id: "potion_soin", name: "Potion de soin", slot: Potion, material: Alchemy, model: "potion", use_skill: "boire_potion_soin", weight: 3.0,
+     description: "Rend une bonne partie de vos PV.",
+     mods: []),
+    (id: "potion_energie", name: "Potion d'énergie", slot: Potion, material: Alchemy, model: "potion_bleue", use_skill: "boire_potion_energie", weight: 1.5,
+     description: "Rend de l'énergie.",
+     mods: []),
+
+    (id: "pain_dur", name: "Pain dur", slot: Food, material: Alchemy, model: "pain", max_tier: 2, weight: 2.0,
+     description: "Ça cale.",
+     mods: [(stat: HpRegen, kind: Flat, value: 0.3)]),
+    (id: "ragout", name: "Ragoût", slot: Food, material: Alchemy, model: "ragout", min_tier: 2,
+     mods: [(stat: MaxHp, kind: Percent, value: 0.06), (stat: HpRegen, kind: Flat, value: 0.4)]),
+    (id: "tourte", name: "Tourte épicée", slot: Food, material: Alchemy, model: "tourte", min_tier: 3,
+     mods: [(stat: PhysicalPower, kind: Percent, value: 0.06), (stat: MagicPower, kind: Percent, value: 0.06)]),
+]

@@ -1,0 +1,20 @@
+// Noms pour générer les aventuriers du monde.
+(
+    male: ["Aldric", "Bertrand", "Corentin", "Dagobert", "Erwan", "Fulbert", "Gaspard", "Hugues", "Isidore",
+           "Jehan", "Konrad", "Lothaire", "Mathurin", "Norbert", "Oswald", "Perceval", "Quentin", "Roland",
+           "Sigismond", "Thibault", "Ulric", "Valère", "Wilfried", "Yvain", "Anselme", "Baudouin", "Clovis",
+           "Enguerrand", "Gauvain", "Hector", "Léandre", "Merlin", "Odon", "Raoul", "Tanguy", "Gontran"],
+    female: ["Adélaïde", "Blanche", "Clotilde", "Douce", "Ermengarde", "Frida", "Gisèle", "Héloïse", "Iseult",
+             "Jehanne", "Katel", "Léonor", "Mahaut", "Nolwenn", "Oriane", "Pernelle", "Rosalinde", "Sibylle",
+             "Thiphaine", "Ursule", "Viviane", "Ysolde", "Aliénor", "Bérengère", "Constance", "Enora",
+             "Guenièvre", "Hildegarde", "Ida", "Mélisande", "Ombeline", "Radegonde", "Sixtine", "Tifenn"],
+    surnames: ["de Brume", "Ferrand", "Lebrun", "du Gué", "Martel", "Corbeau", "Fauvel", "de la Lande",
+               "Rouvray", "Taillefer", "Boisvert", "Hautmont", "Grisemer", "de Vergues", "Malicorne",
+               "Pierrefeu", "Bellegarde", "Morne-Eau", "Sansterre", "Courtecuisse", "Valombre", "Roncier"],
+    nicknames: ["le Hardi", "la Rousse", "Pied-Léger", "Main-de-Fer", "le Taciturne", "la Balafrée",
+                "Deux-Lames", "le Pieux", "l'Ours", "la Chouette", "Trois-Doigts", "le Bavard", "la Lame",
+                "Cœur-de-Givre", "le Prudent", "la Têtue", "Grand-Bras", "le Chanceux"],
+    companies: ["La Lanterne Grise", "Les Corbeaux de Vergues", "La Compagnie du Gué", "Les Lames Franches",
+                "L'Ordre de la Braise", "Les Errants du Nord", "La Garde de Brume", "Les Fils du Marteau",
+                "Le Cercle d'Écorce", "Les Loups Fauves"],
+)

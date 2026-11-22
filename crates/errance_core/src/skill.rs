@@ -375,6 +375,8 @@ pub enum SkillSlot {
     Head,
     Chest,
     Feet,
+    /// Consommable (potion).
+    Potion,
 }
 
 impl SkillSlot {
@@ -396,6 +398,7 @@ impl SkillSlot {
             SkillSlot::Head => "Tête",
             SkillSlot::Chest => "Torse",
             SkillSlot::Feet => "Pieds",
+            SkillSlot::Potion => "Potion",
         }
     }
 
@@ -408,11 +411,12 @@ impl SkillSlot {
             SkillSlot::Head => 4,
             SkillSlot::Chest => 5,
             SkillSlot::Feet => 6,
+            SkillSlot::Potion => 7,
         }
     }
 }
 
-pub const BAR_SIZE: usize = 7;
+pub const BAR_SIZE: usize = 8;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SkillDef {
@@ -456,16 +460,15 @@ impl SkillDef {
                 Effect::Heal { .. } | Effect::SelfHeal { .. } => Some(Tag::Heal),
                 Effect::Shield { .. } | Effect::SelfShield { .. } => Some(Tag::Shield),
                 Effect::Status { kind, .. } | Effect::SelfStatus { kind, .. } => Some(kind.tag()),
-                Effect::Taunt { .. } | Effect::Threat { .. } => Some(Tag::Taunt),
+                Effect::Taunt { .. } => Some(Tag::Taunt),
                 Effect::Knockback { .. } | Effect::Pull { .. } => Some(Tag::Control),
                 Effect::Cleanse => Some(Tag::Heal),
                 _ => None,
             };
-            if let Some(t) = t {
-                if !out.contains(&t) {
+            if let Some(t) = t
+                && !out.contains(&t) {
                     out.push(t);
                 }
-            }
         }
         match self.targeting {
             Targeting::AreaAtTarget { .. }
@@ -478,11 +481,10 @@ impl SkillDef {
                     out.push(Tag::Aoe)
                 }
             }
-            Targeting::Dash { .. } | Targeting::Leap { .. } => {
-                if !out.contains(&Tag::Movement) {
+            Targeting::Dash { .. } | Targeting::Leap { .. }
+                if !out.contains(&Tag::Movement) => {
                     out.push(Tag::Movement)
                 }
-            }
             _ => {}
         }
         out

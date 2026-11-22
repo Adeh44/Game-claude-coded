@@ -4,7 +4,12 @@
 //! objets, les skills et simule les combats. Le jeu (Bevy) ne fait que
 //! l'afficher et lui transmettre les gestes du joueur.
 
+pub mod character;
+pub mod combat;
+pub mod content;
 pub mod item;
+pub mod look;
+pub mod loot;
 pub mod mastery;
 pub mod math;
 pub mod passive;

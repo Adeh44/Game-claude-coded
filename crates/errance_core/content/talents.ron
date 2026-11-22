@@ -1,0 +1,245 @@
+// Talents (passifs). Débloqués par la maîtrise d'une voie, ils s'équipent
+// dans un nombre limité d'emplacements (1 au début, 6 pour un vétéran).
+// needs_equipped: true → ne marche que si un objet de la voie est porté.
+[
+    // ================= LABEUR (corvées) =================
+    (id: "dos_de_docker", name: "Dos de docker", line: "labeur", mastery: 2,
+     description: "Porter des caisses, ça forge. +12 % de PV max.",
+     effects: [Stat((stat: MaxHp, kind: Percent, value: 0.12))]),
+    (id: "souffle_long", name: "Souffle long", line: "labeur", mastery: 6,
+     description: "Vous ne vous essoufflez plus. +15 énergie, +1 régén. d'énergie.",
+     effects: [Stat((stat: MaxEnergy, kind: Flat, value: 15.0)), Stat((stat: EnergyRegen, kind: Flat, value: 1.0))]),
+    (id: "cuir_tanne", name: "Peau tannée", line: "labeur", mastery: 12,
+     description: "Les ampoules sont devenues de la corne. +8 armure, +1 régén. de vie.",
+     effects: [Stat((stat: Armor, kind: Flat, value: 8.0)), Stat((stat: HpRegen, kind: Flat, value: 1.0))]),
+    (id: "increvable", name: "Increvable", line: "labeur", mastery: 25,
+     description: "Sous 30 % de PV : +40 % d'armure et de résistance.",
+     effects: [StatWhile(cond: HpBelow(0.3), modifier: (stat: Armor, kind: Percent, value: 0.4)), StatWhile(cond: HpBelow(0.3), modifier: (stat: MagicResist, kind: Percent, value: 0.4))]),
+
+    // ================= MAINS NUES =================
+    (id: "poings_de_fer", name: "Poings de fer", line: "poings", mastery: 3, needs_equipped: true,
+     description: "+30 % de vitesse d'attaque à mains nues.",
+     effects: [Stat((stat: AttackSpeed, kind: Flat, value: 0.3))]),
+    (id: "bagarreur", name: "Bagarreur", line: "poings", mastery: 12,
+     description: "Entouré de 2 ennemis ou plus : +25 % de puissance physique.",
+     effects: [StatWhile(cond: Surrounded(2), modifier: (stat: PhysicalPower, kind: Percent, value: 0.25))]),
+
+    // ================= MASSES =================
+    (id: "tete_dure", name: "Tête dure", line: "masse", mastery: 3, needs_equipped: true,
+     description: "+10 % de ténacité, +15 % de PV.",
+     effects: [Stat((stat: Tenacity, kind: Flat, value: 0.1)), Stat((stat: MaxHp, kind: Percent, value: 0.15))]),
+    (id: "sonneur", name: "Sonneur de cloches", line: "masse", mastery: 20, needs_equipped: true,
+     description: "Vos coups ont 12 % de chances d'étourdir.",
+     effects: [OnHit(tag: Some(Melee), chance: 0.12, effect: Status(kind: Stun, duration: 0.6))]),
+    (id: "gardien", name: "Gardien", line: "masse", mastery: 45,
+     description: "+30 % de menace générée, +10 % d'armure.",
+     effects: [Stat((stat: ThreatMult, kind: Flat, value: 0.3)), Stat((stat: Armor, kind: Percent, value: 0.1))]),
+
+    // ================= ÉPÉES =================
+    (id: "fil_du_rasoir", name: "Fil du rasoir", line: "epee", mastery: 3, needs_equipped: true,
+     description: "Vos coups de mêlée ont 25 % de chances de faire saigner.",
+     effects: [OnHit(tag: Some(Melee), chance: 0.25, effect: Status(kind: Bleed, duration: 4.0, magnitude: 1.0))]),
+    (id: "maitre_d_armes", name: "Maître d'armes", line: "epee", mastery: 22, needs_equipped: true,
+     description: "+8 % de critiques, +25 % de dégâts critiques.",
+     effects: [Stat((stat: CritChance, kind: Flat, value: 0.08)), Stat((stat: CritDamage, kind: Flat, value: 0.25))]),
+    (id: "riposte", name: "Riposte", line: "epee", mastery: 50,
+     description: "Quand on vous frappe : 20 % de chances de gagner Galvanisé.",
+     effects: [OnDamaged(chance: 0.2, effect: Status(kind: Empower, duration: 3.0, magnitude: 0.25), to_attacker: false, internal_cd: 4.0)]),
+
+    // ================= HACHES =================
+    (id: "soif_de_sang", name: "Soif de sang", line: "hache", mastery: 3, needs_equipped: true,
+     description: "+5 % de vol de vie.",
+     effects: [Stat((stat: Lifesteal, kind: Flat, value: 0.05))]),
+    (id: "berserker", name: "Berserker", line: "hache", mastery: 20,
+     description: "Sous 50 % de PV : +30 % de puissance physique et de vitesse d'attaque.",
+     effects: [StatWhile(cond: HpBelow(0.5), modifier: (stat: PhysicalPower, kind: Percent, value: 0.3)), StatWhile(cond: HpBelow(0.5), modifier: (stat: AttackSpeed, kind: Flat, value: 0.3))]),
+    (id: "boucher", name: "Boucher", line: "hache", mastery: 45, needs_equipped: true,
+     description: "Les skills de saignement sont 25 % plus forts. Achever rend 10 % de PV.",
+     effects: [TagPower(tag: Bleed, pct: 0.25), OnKill(effect: SelfHeal(base: 0.0, scaling: 0.1))]),
+
+    // ================= LANCES =================
+    (id: "allonge", name: "Allonge", line: "lance", mastery: 3, needs_equipped: true,
+     description: "+10 % de vitesse de déplacement.",
+     effects: [Stat((stat: MoveSpeed, kind: Percent, value: 0.1))]),
+    (id: "cavalier", name: "Cavalier", line: "lance", mastery: 22,
+     description: "Vos skills de mouvement sont 30 % plus forts et rechargent 20 % plus vite.",
+     effects: [TagPower(tag: Movement, pct: 0.3), TagCooldown(tag: Movement, pct: 0.2)]),
+    (id: "phalange", name: "Phalange", line: "lance", mastery: 48,
+     description: "+12 % d'armure et 15 % de chances de ralentir en frappant.",
+     effects: [Stat((stat: Armor, kind: Percent, value: 0.12)), OnHit(tag: None, chance: 0.15, effect: Status(kind: Slow, duration: 2.0, magnitude: 0.3))]),
+
+    // ================= DAGUES =================
+    (id: "venimeux", name: "Venimeux", line: "dague", mastery: 3, needs_equipped: true,
+     description: "Vos coups ont 30 % de chances d'empoisonner.",
+     effects: [OnHit(tag: Some(Melee), chance: 0.3, effect: Status(kind: Poison, duration: 5.0, magnitude: 1.0))]),
+    (id: "ombre_fuyante", name: "Ombre fuyante", line: "dague", mastery: 20,
+     description: "+8 % d'esquive.",
+     effects: [Stat((stat: DodgeChance, kind: Flat, value: 0.08))]),
+    (id: "assassin", name: "Assassin", line: "dague", mastery: 45, needs_equipped: true,
+     description: "+12 % de critiques ; les exécutions sont 30 % plus fortes.",
+     effects: [Stat((stat: CritChance, kind: Flat, value: 0.12)), TagPower(tag: Execute, pct: 0.3)]),
+
+    // ================= MARTEAUX =================
+    (id: "masse_critique", name: "Masse critique", line: "marteau", mastery: 3, needs_equipped: true,
+     description: "+20 % de PV max.",
+     effects: [Stat((stat: MaxHp, kind: Percent, value: 0.2))]),
+    (id: "tremblement", name: "Tremblement", line: "marteau", mastery: 22,
+     description: "Vos étourdissements durent 25 % plus longtemps.",
+     effects: [StatusDuration(status: Stun, pct: 0.25)]),
+    (id: "colosse", name: "Colosse", line: "marteau", mastery: 50,
+     description: "Entouré de 3 ennemis ou plus : -20 % de dégâts subis (fortifié en continu via +armure/+résistance).",
+     effects: [StatWhile(cond: Surrounded(3), modifier: (stat: Armor, kind: Percent, value: 0.35)), StatWhile(cond: Surrounded(3), modifier: (stat: MagicResist, kind: Percent, value: 0.35))]),
+
+    // ================= ARCS =================
+    (id: "main_sure", name: "Main sûre", line: "arc", mastery: 3, needs_equipped: true,
+     description: "+5 % de critiques, +10 % de vitesse d'attaque.",
+     effects: [Stat((stat: CritChance, kind: Flat, value: 0.05)), Stat((stat: AttackSpeed, kind: Flat, value: 0.1))]),
+    (id: "pas_du_chasseur", name: "Pas du chasseur", line: "arc", mastery: 20,
+     description: "+12 % de vitesse, +5 % d'esquive.",
+     effects: [Stat((stat: MoveSpeed, kind: Percent, value: 0.12)), Stat((stat: DodgeChance, kind: Flat, value: 0.05))]),
+    (id: "tireur_d_elite", name: "Tireur d'élite", line: "arc", mastery: 48, needs_equipped: true,
+     description: "Vos skills à distance sont 20 % plus forts.",
+     effects: [TagPower(tag: Ranged, pct: 0.2)]),
+
+    // ================= ARBALÈTES =================
+    (id: "carreaux_lourds", name: "Carreaux lourds", line: "arbalete", mastery: 3, needs_equipped: true,
+     description: "+35 % de dégâts critiques.",
+     effects: [Stat((stat: CritDamage, kind: Flat, value: 0.35))]),
+    (id: "pieges_vicieux", name: "Pièges vicieux", line: "arbalete", mastery: 25,
+     description: "Vos contrôles durent 20 % plus longtemps.",
+     effects: [Stat((stat: ControlPower, kind: Flat, value: 0.2))]),
+
+    // ================= FEU =================
+    (id: "pyromane", name: "Pyromane", line: "feu", mastery: 3, needs_equipped: true,
+     description: "Vos skills de feu sont 15 % plus forts.",
+     effects: [TagPower(tag: Fire, pct: 0.15)]),
+    (id: "brasier", name: "Brasier", line: "feu", mastery: 22,
+     description: "Vos brûlures durent 40 % plus longtemps.",
+     effects: [StatusDuration(status: Burn, pct: 0.4)]),
+    (id: "coeur_ardent", name: "Cœur ardent", line: "feu", mastery: 50, needs_equipped: true,
+     description: "Vos coups ont 20 % de chances d'enflammer.",
+     effects: [OnHit(tag: None, chance: 0.2, effect: Status(kind: Burn, duration: 4.0, magnitude: 2.0))]),
+
+    // ================= GIVRE =================
+    (id: "froid_mordant", name: "Froid mordant", line: "givre", mastery: 3, needs_equipped: true,
+     description: "Vos skills de givre ont 30 % de chances d'ajouter un cumul de Transi.",
+     effects: [OnHit(tag: Some(Frost), chance: 0.3, effect: Status(kind: Chill, duration: 3.0))]),
+    (id: "coeur_de_glace", name: "Cœur de glace", line: "givre", mastery: 20,
+     description: "+15 % de ténacité, +10 % de résistance magique.",
+     effects: [Stat((stat: Tenacity, kind: Flat, value: 0.15)), Stat((stat: MagicResist, kind: Percent, value: 0.1))]),
+    (id: "hiver_eternel", name: "Hiver éternel", line: "givre", mastery: 48, needs_equipped: true,
+     description: "Vos gels durent 35 % plus longtemps, vos contrôles 10 %.",
+     effects: [StatusDuration(status: Frozen, pct: 0.35), Stat((stat: ControlPower, kind: Flat, value: 0.1))]),
+
+    // ================= ARCANE =================
+    (id: "flux", name: "Flux", line: "arcane", mastery: 3, needs_equipped: true,
+     description: "+1,5 régén. d'énergie.",
+     effects: [Stat((stat: EnergyRegen, kind: Flat, value: 1.5))]),
+    (id: "esprit_vif", name: "Esprit vif", line: "arcane", mastery: 20,
+     description: "+8 % de célérité.",
+     effects: [Stat((stat: Haste, kind: Flat, value: 0.08))]),
+    (id: "reservoir", name: "Réservoir", line: "arcane", mastery: 45,
+     description: "Puissance magique +1 pour 5 d'énergie max.",
+     effects: [Convert(from: MaxEnergy, to: MagicPower, ratio: 0.2)]),
+
+    // ================= SACRÉ =================
+    (id: "foi", name: "Foi", line: "sacre", mastery: 3, needs_equipped: true,
+     description: "Vos soins sont 15 % plus forts.",
+     effects: [TagPower(tag: Heal, pct: 0.15)]),
+    (id: "lumiere_protectrice", name: "Lumière protectrice", line: "sacre", mastery: 22,
+     description: "Vos soins posent aussi un petit bouclier.",
+     effects: [OnHeal(effect: Shield(base: 6.0, scaling: 0.3, duration: 4.0))]),
+    (id: "martyr", name: "Martyr", line: "sacre", mastery: 50,
+     description: "+15 % de puissance de soin et +10 % de PV.",
+     effects: [Stat((stat: HealPower, kind: Percent, value: 0.15)), Stat((stat: MaxHp, kind: Percent, value: 0.1))]),
+
+    // ================= NATURE =================
+    (id: "racines", name: "Racines", line: "nature", mastery: 3, needs_equipped: true,
+     description: "+1,5 régén. de vie, +10 % de puissance de soin.",
+     effects: [Stat((stat: HpRegen, kind: Flat, value: 1.5)), Stat((stat: HealPower, kind: Percent, value: 0.1))]),
+    (id: "cycle", name: "Cycle de la vie", line: "nature", mastery: 22,
+     description: "Vos soins posent aussi une régénération.",
+     effects: [OnHeal(effect: Status(kind: Regen, duration: 4.0, magnitude: 1.0))]),
+    (id: "symbiose", name: "Symbiose", line: "nature", mastery: 48, needs_equipped: true,
+     description: "Vos poisons sont 30 % plus forts.",
+     effects: [TagPower(tag: Poison, pct: 0.3), StatusDuration(status: Poison, pct: 0.2)]),
+
+    // ================= MAUDIT =================
+    (id: "rancune", name: "Rancune", line: "maudit", mastery: 3, needs_equipped: true,
+     description: "+4 % de vol de vie.",
+     effects: [Stat((stat: Lifesteal, kind: Flat, value: 0.04))]),
+    (id: "contagion", name: "Contagion", line: "maudit", mastery: 22,
+     description: "Vos affaiblissements sont 25 % plus forts.",
+     effects: [TagPower(tag: Debuff, pct: 0.25), TagPower(tag: Poison, pct: 0.1)]),
+    (id: "faucheur", name: "Faucheur", line: "maudit", mastery: 48,
+     description: "Achever un ennemi rend 15 d'énergie et vous galvanise.",
+     effects: [OnKill(effect: RestoreEnergy(amount: 15.0)), OnKill(effect: SelfStatus(kind: Empower, duration: 4.0, magnitude: 0.3))]),
+
+    // ================= BOUCLIERS =================
+    (id: "mur_vivant", name: "Mur vivant", line: "bouclier", mastery: 3, needs_equipped: true,
+     description: "+8 % de blocage.",
+     effects: [Stat((stat: BlockChance, kind: Flat, value: 0.08))]),
+    (id: "contre_coup", name: "Contre-coup", line: "bouclier", mastery: 25, needs_equipped: true,
+     description: "Quand on vous frappe : 25 % de chances de renvoyer un étourdissement.",
+     effects: [OnDamaged(chance: 0.25, effect: Status(kind: Stun, duration: 0.6), to_attacker: true, internal_cd: 5.0)]),
+
+    // ================= TOMES =================
+    (id: "erudit", name: "Érudit", line: "tome", mastery: 3, needs_equipped: true,
+     description: "+12 % de puissance magique.",
+     effects: [Stat((stat: MagicPower, kind: Percent, value: 0.12))]),
+    (id: "lecture_rapide", name: "Lecture rapide", line: "tome", mastery: 25,
+     description: "Vos sorts rechargent 12 % plus vite.",
+     effects: [TagCooldown(tag: Spell, pct: 0.12)]),
+
+    // ================= TORCHES =================
+    (id: "porteur_de_lumiere", name: "Porteur de lumière", line: "torche", mastery: 2,
+     description: "Ceux qui portent la torche savent tenir longtemps. +2 régén. d'énergie.",
+     effects: [Stat((stat: EnergyRegen, kind: Flat, value: 2.0))]),
+    (id: "flamme_vive", name: "Flamme vive", line: "torche", mastery: 18, needs_equipped: true,
+     description: "Vos skills de feu sont 10 % plus forts et vos coups peuvent brûler.",
+     effects: [TagPower(tag: Fire, pct: 0.1), OnHit(tag: None, chance: 0.1, effect: Status(kind: Burn, duration: 3.0, magnitude: 1.0))]),
+
+    // ================= ORBES =================
+    (id: "rayonnement", name: "Rayonnement", line: "orbe", mastery: 3, needs_equipped: true,
+     description: "Vos boucliers sont 20 % plus solides.",
+     effects: [Stat((stat: ShieldPower, kind: Flat, value: 0.2))]),
+    (id: "aura_de_paix", name: "Aura de paix", line: "orbe", mastery: 25,
+     description: "+12 % de puissance de soin.",
+     effects: [Stat((stat: HealPower, kind: Percent, value: 0.12))]),
+
+    // ================= PLAQUES =================
+    (id: "carapace", name: "Carapace", line: "plaque", mastery: 3, needs_equipped: true,
+     description: "+15 % d'armure.",
+     effects: [Stat((stat: Armor, kind: Percent, value: 0.15))]),
+    (id: "bastion_arcanique", name: "Bastion arcanique", line: "plaque", mastery: 20, needs_equipped: true,
+     description: "Le talent du mage-tank : +0,6 armure par point d'énergie max, +2 PV par point de puissance magique.",
+     effects: [Convert(from: MaxEnergy, to: Armor, ratio: 0.6), Convert(from: MagicPower, to: MaxHp, ratio: 2.0)]),
+    (id: "inflexible", name: "Inflexible", line: "plaque", mastery: 40,
+     description: "+20 % de ténacité ; avec un bouclier actif, +25 % d'armure.",
+     effects: [Stat((stat: Tenacity, kind: Flat, value: 0.2)), StatWhile(cond: Shielded, modifier: (stat: Armor, kind: Percent, value: 0.25))]),
+    (id: "forteresse", name: "Forteresse", line: "plaque", mastery: 70,
+     description: "+20 % de PV max, +20 % de menace.",
+     effects: [Stat((stat: MaxHp, kind: Percent, value: 0.2)), Stat((stat: ThreatMult, kind: Flat, value: 0.2))]),
+
+    // ================= CUIR =================
+    (id: "agilite", name: "Agilité", line: "cuir", mastery: 3, needs_equipped: true,
+     description: "+5 % d'esquive, +5 % de vitesse.",
+     effects: [Stat((stat: DodgeChance, kind: Flat, value: 0.05)), Stat((stat: MoveSpeed, kind: Percent, value: 0.05))]),
+    (id: "predateur", name: "Prédateur", line: "cuir", mastery: 22,
+     description: "+6 % de critiques et +10 % de vitesse d'attaque.",
+     effects: [Stat((stat: CritChance, kind: Flat, value: 0.06)), Stat((stat: AttackSpeed, kind: Flat, value: 0.1))]),
+    (id: "survivant", name: "Survivant", line: "cuir", mastery: 45,
+     description: "Sous 35 % de PV : +25 % d'esquive.",
+     effects: [StatWhile(cond: HpBelow(0.35), modifier: (stat: DodgeChance, kind: Flat, value: 0.25))]),
+
+    // ================= TISSU =================
+    (id: "concentration", name: "Concentration", line: "tissu", mastery: 3, needs_equipped: true,
+     description: "+20 énergie max.",
+     effects: [Stat((stat: MaxEnergy, kind: Flat, value: 20.0))]),
+    (id: "canalisation", name: "Canalisation", line: "tissu", mastery: 22,
+     description: "+10 % de puissance magique et de soin.",
+     effects: [Stat((stat: MagicPower, kind: Percent, value: 0.1)), Stat((stat: HealPower, kind: Percent, value: 0.1))]),
+    (id: "maitre_des_flux", name: "Maître des flux", line: "tissu", mastery: 50,
+     description: "+10 % de célérité, +2 régén. d'énergie.",
+     effects: [Stat((stat: Haste, kind: Flat, value: 0.1)), Stat((stat: EnergyRegen, kind: Flat, value: 2.0))]),
+]

@@ -1,0 +1,22 @@
+// Corvées du tableau des petits boulots de Gué-Rouge. Elles paient mal,
+// mais font monter le Labeur (talents de PV, d'énergie, d'armure).
+[
+    (id: "caisses_du_port", name: "Décharger les caisses", giver: "Maître Ombrin, du port",
+     description: "Glissez les caisses de la barge jusqu'à la charrette. Attention, ne les faites pas tomber.",
+     game: Carry, pay: 3, fame: 12.0),
+    (id: "ecurie", name: "Nettoyer l'écurie", giver: "La vieille Madrène",
+     description: "Frottez le fumier jusqu'à ce que la paille soit propre. Ça sent fort.",
+     game: Scrub, pay: 2, fame: 10.0),
+    (id: "bois", name: "Fendre du bois", giver: "Tobbe le bûcheron",
+     description: "Tapez au moment où la hache est au plus haut. Un coup raté, c'est une bûche gâchée.",
+     game: Rhythm, pay: 4, fame: 14.0, labor: 1),
+    (id: "livraisons", name: "Livrer le pain", giver: "Le boulanger Fennick",
+     description: "Livrez les miches aux bonnes portes, dans l'ordre. Vite, avant qu'elles refroidissent.",
+     game: Deliver, pay: 5, fame: 15.0, labor: 2),
+    (id: "forge", name: "Tirer le soufflet de la forge", giver: "Bréa la forgeronne",
+     description: "Gardez le rythme du marteau. Bréa ne paie que si l'acier est bien chaud.",
+     game: Rhythm, pay: 7, fame: 22.0, labor: 4, difficulty: 1.5),
+    (id: "entrepot", name: "Ranger l'entrepôt", giver: "Maître Ombrin, du port",
+     description: "Des caisses plus lourdes, plus nombreuses. Le vrai travail de docker.",
+     game: Carry, pay: 8, fame: 25.0, labor: 6, difficulty: 1.6),
+]

@@ -1,0 +1,57 @@
+// Les Voies : chaque arme, armure, main secondaire et métier a la sienne.
+// On progresse dans une Voie en la pratiquant (gloire gagnée en l'utilisant).
+[
+    // ---------------- Armes ----------------
+    (id: "poings", name: "Mains nues", category: Weapon, color: (0.85, 0.7, 0.55),
+     description: "Quand on n'a rien d'autre. Rapide, faible, mais on apprend vite à encaisser."),
+    (id: "masse", name: "Masses & gourdins", category: Weapon, color: (0.6, 0.5, 0.4),
+     description: "Assommer, briser, tenir la ligne. L'arme des gardes et des tanks."),
+    (id: "epee", name: "Épées", category: Weapon, color: (0.75, 0.78, 0.85),
+     description: "Polyvalentes : entailles, parades, assauts. Saignements et contre-attaques."),
+    (id: "hache", name: "Haches", category: Weapon, color: (0.7, 0.35, 0.3),
+     description: "Frapper large, faire saigner, se nourrir du combat (vol de vie)."),
+    (id: "lance", name: "Lances", category: Weapon, color: (0.65, 0.6, 0.35),
+     description: "Allonge, charges et percées. Contrôle la distance."),
+    (id: "dague", name: "Dagues", category: Weapon, color: (0.4, 0.75, 0.45),
+     description: "Vite, dans le dos, empoisonné. Critiques et esquives."),
+    (id: "marteau", name: "Marteaux de guerre", category: Weapon, color: (0.55, 0.55, 0.65),
+     description: "Lourds et lents. Étourdissements et ondes de choc : le rêve du tank."),
+    (id: "arc", name: "Arcs", category: Weapon, color: (0.55, 0.75, 0.35),
+     description: "Tirer de loin, tirer souvent. Pluies de flèches et tirs perçants."),
+    (id: "arbalete", name: "Arbalètes", category: Weapon, color: (0.5, 0.45, 0.4),
+     description: "Lentes mais dévastatrices. Carreaux qui repoussent et brisent l'armure."),
+    (id: "feu", name: "Bâtons de feu", category: Weapon, color: (0.95, 0.45, 0.15),
+     description: "Brûler, exploser, en zone. Les dégâts qui continuent après le coup."),
+    (id: "givre", name: "Bâtons de givre", category: Weapon, color: (0.55, 0.8, 1.0),
+     description: "Ralentir, geler, contrôler. Cinq cumuls de Transi et la cible est gelée."),
+    (id: "arcane", name: "Bâtons arcaniques", category: Weapon, color: (0.7, 0.45, 0.95),
+     description: "Silences, énergie, téléportation. La magie de ceux qui manipulent le combat."),
+    (id: "sacre", name: "Bâtons sacrés", category: Weapon, color: (1.0, 0.9, 0.55),
+     description: "Soigner, protéger, purifier. Le cœur d'un groupe qui tient."),
+    (id: "nature", name: "Bâtons de nature", category: Weapon, color: (0.35, 0.8, 0.4),
+     description: "Soins sur la durée, ronces et poisons. La patience de la forêt."),
+    (id: "maudit", name: "Bâtons maudits", category: Weapon, color: (0.5, 0.25, 0.55),
+     description: "Affaiblir, drainer, maudire. Ce qui ronge plutôt que ce qui frappe."),
+
+    // ---------------- Mains secondaires ----------------
+    (id: "bouclier", name: "Boucliers", category: OffHand, color: (0.6, 0.6, 0.7),
+     description: "Blocage et armure. Indispensable à qui veut encaisser."),
+    (id: "tome", name: "Tomes", category: OffHand, color: (0.6, 0.45, 0.8),
+     description: "Puissance magique et célérité pour les lanceurs de sorts."),
+    (id: "torche", name: "Torches", category: OffHand, color: (0.95, 0.6, 0.2),
+     description: "Lumière, énergie et un peu de feu. L'outil du porteur... et des mages pauvres."),
+    (id: "orbe", name: "Orbes", category: OffHand, color: (0.5, 0.9, 0.9),
+     description: "Puissance de soin et de bouclier."),
+
+    // ---------------- Armures ----------------
+    (id: "tissu", name: "Armures de tissu", category: Armor, color: (0.7, 0.65, 0.9),
+     description: "Peu de protection, beaucoup d'énergie et de célérité. Skills de magie et de soutien."),
+    (id: "cuir", name: "Armures de cuir", category: Armor, color: (0.65, 0.5, 0.35),
+     description: "Équilibre : vitesse, esquive, critiques. Skills de mobilité."),
+    (id: "plaque", name: "Armures de plaques", category: Armor, color: (0.7, 0.72, 0.78),
+     description: "Très solide, plus lente. Skills de provocation et de défense."),
+
+    // ---------------- Métiers ----------------
+    (id: "labeur", name: "Labeur", category: Job, color: (0.8, 0.65, 0.4),
+     description: "Porter, frotter, couper, livrer. Les corvées forgent le corps de ceux qui n'ont rien."),
+]

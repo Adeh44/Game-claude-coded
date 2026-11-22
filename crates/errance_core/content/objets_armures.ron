@@ -1,0 +1,40 @@
+// Armures : tissu (énergie, magie), cuir (vitesse, esquive), plaques (PV, armure).
+[
+    // ---------- Haillons de départ ----------
+    (id: "haillons", name: "Haillons", slot: Chest, line: "tissu", material: Cloth,
+     model: "haillons", max_tier: 1, weight: 0.5,
+     description: "Des vêtements qui ont connu des jours meilleurs. Beaucoup de jours.",
+     mods: [(stat: MaxHp, kind: Flat, value: 8.0)]),
+
+    // ---------- Plaques ----------
+    (id: "casque", name: "Casque", slot: Head, line: "plaque", material: Metal, model: "casque",
+     mods: [(stat: MaxHp, kind: Flat, value: 15.0), (stat: Armor, kind: Flat, value: 8.0), (stat: MagicResist, kind: Flat, value: 3.0)]),
+    (id: "casque_cornes", name: "Casque à cornes", slot: Head, line: "plaque", material: Metal, model: "casque_cornes", min_tier: 3,
+     mods: [(stat: MaxHp, kind: Flat, value: 14.0), (stat: Armor, kind: Flat, value: 7.0), (stat: ThreatMult, kind: Flat, value: 0.15), (stat: PhysicalPower, kind: Flat, value: 1.0)]),
+    (id: "cotte", name: "Cotte de mailles", slot: Chest, line: "plaque", material: Metal, model: "cotte",
+     mods: [(stat: MaxHp, kind: Flat, value: 30.0), (stat: Armor, kind: Flat, value: 15.0), (stat: MagicResist, kind: Flat, value: 5.0)]),
+    (id: "plastron", name: "Plastron", slot: Chest, line: "plaque", material: Metal, model: "plastron", min_tier: 3,
+     mods: [(stat: MaxHp, kind: Flat, value: 35.0), (stat: Armor, kind: Flat, value: 18.0), (stat: Tenacity, kind: Flat, value: 0.05)]),
+    (id: "solerets", name: "Solerets", slot: Feet, line: "plaque", material: Metal, model: "solerets",
+     mods: [(stat: MaxHp, kind: Flat, value: 10.0), (stat: Armor, kind: Flat, value: 6.0), (stat: MoveSpeed, kind: Flat, value: -0.15)]),
+
+    // ---------- Cuir ----------
+    (id: "capuche", name: "Capuche", slot: Head, line: "cuir", material: Leather, model: "capuche", weight: 1.3,
+     mods: [(stat: MaxHp, kind: Flat, value: 10.0), (stat: Armor, kind: Flat, value: 4.0), (stat: CritChance, kind: Flat, value: 0.02)]),
+    (id: "veste_cuir", name: "Veste de cuir", slot: Chest, line: "cuir", material: Leather, model: "veste_cuir", weight: 1.3,
+     mods: [(stat: MaxHp, kind: Flat, value: 20.0), (stat: Armor, kind: Flat, value: 8.0), (stat: DodgeChance, kind: Flat, value: 0.03)]),
+    (id: "brigandine", name: "Brigandine", slot: Chest, line: "cuir", material: Leather, model: "gambison", min_tier: 3,
+     mods: [(stat: MaxHp, kind: Flat, value: 24.0), (stat: Armor, kind: Flat, value: 10.0), (stat: AttackSpeed, kind: Flat, value: 0.05)]),
+    (id: "bottes", name: "Bottes", slot: Feet, line: "cuir", material: Leather, model: "bottes", weight: 1.3,
+     mods: [(stat: MaxHp, kind: Flat, value: 8.0), (stat: Armor, kind: Flat, value: 3.0), (stat: MoveSpeed, kind: Flat, value: 0.25)]),
+
+    // ---------- Tissu ----------
+    (id: "chapeau_pointu", name: "Chapeau pointu", slot: Head, line: "tissu", material: Cloth, model: "chapeau_mage",
+     mods: [(stat: MaxHp, kind: Flat, value: 6.0), (stat: MaxEnergy, kind: Flat, value: 8.0), (stat: MagicResist, kind: Flat, value: 4.0), (stat: Haste, kind: Flat, value: 0.03)]),
+    (id: "capuche_tissu", name: "Capuchon", slot: Head, line: "tissu", material: Cloth, model: "capuche", min_tier: 2,
+     mods: [(stat: MaxHp, kind: Flat, value: 8.0), (stat: HealPower, kind: Flat, value: 2.0), (stat: MagicResist, kind: Flat, value: 5.0)]),
+    (id: "robe", name: "Robe", slot: Chest, line: "tissu", material: Cloth, model: "robe",
+     mods: [(stat: MaxHp, kind: Flat, value: 12.0), (stat: MagicResist, kind: Flat, value: 8.0), (stat: MaxEnergy, kind: Flat, value: 12.0), (stat: MagicPower, kind: Flat, value: 2.0)]),
+    (id: "sandales", name: "Sandales", slot: Feet, line: "tissu", material: Cloth, model: "sandales",
+     mods: [(stat: MaxHp, kind: Flat, value: 5.0), (stat: MaxEnergy, kind: Flat, value: 5.0), (stat: MoveSpeed, kind: Flat, value: 0.15), (stat: EnergyRegen, kind: Flat, value: 0.3)]),
+]
