@@ -48,6 +48,9 @@ pub struct Field {
     pub kills: u32,
     pub rng: Rng,
     pub used_potion: bool,
+    /// Mode porteur : id de la compagnie.
+    pub porter_for: Option<u32>,
+    pub porter_timer: f32,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -183,13 +186,22 @@ pub fn setup_field(
     let hero_spec = p.hero.fighter_spec(c, Team::Ally, Controller::Player);
     let mut party_specs = vec![];
     let mut party_ids = vec![];
-    for id in &exp.party {
+    // Porteur : la compagnie entière part, son chef en tête.
+    let members: Vec<u32> = match exp.porter_for.and_then(|cid| p.world.company(cid)) {
+        Some(co) => {
+            let mut m = vec![co.leader];
+            m.extend(co.members.iter().copied().filter(|x| *x != co.leader));
+            m
+        }
+        None => exp.party.clone(),
+    };
+    for id in &members {
         if let Some(n) = p.world.npc(*id) {
             party_specs.push(n.sheet.fighter_spec(c, Team::Ally, Controller::Companion { rules: n.sheet.rules.clone() }));
             party_ids.push(*id);
         }
     }
-    let (combat, hero, fids) = setup_combat(c, &layout, hero_spec, party_specs, seed);
+    let (combat, hero, fids) = setup_combat(c, &layout, hero_spec, party_specs, seed, exp.porter_for.is_some());
     let mut npc_of = HashMap::default();
     for (fid, nid) in fids.iter().zip(party_ids.iter()) {
         npc_of.insert(*fid, *nid);
@@ -306,7 +318,7 @@ pub fn setup_field(
     }
     toasts.push(format!("{} — Tier {}", zone.name, zone.tier));
     if exp.porter_for.is_some() {
-        toasts.push("Vous portez la torche. Restez derrière.".to_string());
+        toasts.push("Vous êtes le porteur. Suivez la compagnie, ramassez le butin, restez derrière.".to_string());
     }
     commands.insert_resource(Field {
         combat,
@@ -325,6 +337,8 @@ pub fn setup_field(
         kills: 0,
         rng,
         used_potion: false,
+        porter_for: exp.porter_for,
+        porter_timer: 0.0,
     });
 }
 
@@ -667,7 +681,30 @@ fn step_combat(
     // Zone nettoyée ?
     if !field.cleared_announced && !field.combat.fighters.iter().any(|f| f.alive && f.team == Team::Enemy) {
         field.cleared_announced = true;
-        toasts.push("Zone nettoyée ! Retournez au feu de camp pour rentrer.".into());
+        if field.porter_for.is_some() {
+            toasts.push("Le chef lève le poing : « On rentre ! Porteur, ramasse tout ! »".into());
+        } else {
+            toasts.push("Zone nettoyée ! Retournez au feu de camp pour rentrer.".into());
+        }
+    }
+    // Porteur : la compagnie rentre d'elle-même une fois le travail fini.
+    if field.porter_for.is_some() && field.cleared_announced && field.end.is_none() {
+        field.porter_timer += dt;
+        let leader_dead = field.combat.leader.and_then(|l| field.combat.get(l)).map(|l| !l.alive).unwrap_or(true);
+        if field.porter_timer > 12.0 || (leader_dead && field.porter_timer > 2.0) {
+            field.end = Some(End::Return);
+            menu.summary = finish_expedition(&mut game, &mut field);
+            menu.dirty = true;
+            ov.0 = Some(crate::Panel::Summary);
+        }
+    }
+    // Porteur : si toute la compagnie tombe, c'est la débandade.
+    if let Some(_cid) = field.porter_for {
+        let allies_alive = field.combat.fighters.iter().filter(|f| f.alive && f.team == Team::Ally && f.id != hero).count();
+        if allies_alive == 0 && field.end.is_none() && !field.cleared_announced {
+            toasts.push("La compagnie est tombée ! Fuyez vers le feu de camp !".into());
+            field.cleared_announced = true;
+        }
     }
     let _ = item_name;
 }
@@ -964,6 +1001,46 @@ pub fn finish_expedition(game: &mut Game, field: &mut Field) -> Vec<String> {
             }
             field.loot.clear();
             field.gold = 0;
+        }
+        _ if field.porter_for.is_some() => {
+            let cid = field.porter_for.unwrap();
+            let key = format!("co:{cid}");
+            let rep = p.reputation.get(&key).copied().unwrap_or(0);
+            let rank = errance_core::world::Rank::from_rep(rep);
+            let name = p.world.company(cid).map(|co| co.name.clone()).unwrap_or_default();
+            lines.push(format!("Retour avec {name}. Vous étiez : {}.", rank.label()));
+            let share = (field.gold as f32 * rank.share()).round() as u32 + 2;
+            lines.push(format!("Butin ramassé : {} po et {} objet(s). Votre part : {share} po.", field.gold, field.loot.len()));
+            p.earn(share);
+            // Au rang de Membre, on garde un objet sur le tas.
+            if rank >= errance_core::world::Rank::Member {
+                if let Some(it) = field.loot.pop() {
+                    let n = item_name(c, &it);
+                    if p.add_to_bag(c, it) {
+                        lines.push(format!("Le chef vous laisse : {n}."));
+                    }
+                }
+            }
+            field.loot.clear();
+            field.gold = 0;
+            let gain = 10 + field.kills.min(10) as i32;
+            let new_rep = rep + gain;
+            p.reputation.insert(key, new_rep);
+            let new_rank = errance_core::world::Rank::from_rep(new_rep);
+            lines.push(format!("Réputation auprès de la compagnie : +{gain} ({new_rep})."));
+            if new_rank > rank {
+                lines.push(format!("Promotion ! Vous êtes maintenant {} de {name}.", new_rank.label()));
+                lines.push("Les membres commencent à retenir votre nom.".into());
+            } else if rank == errance_core::world::Rank::Porter {
+                lines.push("Personne ne vous a adressé la parole. Sauf pour vous dire de porter plus vite.".into());
+            }
+            // Porter, c'est du labeur ; tenir la torche aussi.
+            let labor = 15.0 + field.kills as f64 * 2.0;
+            p.hero.masteries.add_fame("labeur", labor);
+            p.hero.masteries.add_fame("torche", labor * 0.5);
+            p.hero.fix_loadout(c);
+            lines.push(format!("+{:.0} gloire de Labeur, +{:.0} de Torche.", labor, labor * 0.5));
+            p.set_flag("compagnie");
         }
         _ => {
             lines.push(format!("Retour à Gué-Rouge. Ennemis vaincus : {}.", field.kills));

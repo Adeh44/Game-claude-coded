@@ -851,6 +851,18 @@ impl Combat {
                         if any_fight { self.nearest_enemy(i, 12.0) } else { None }
                     }),
             });
+            // Un chef PNJ mène la marche : il va chercher le prochain ennemi.
+            let is_npc_leader = self.leader == Some(self.fighters[i].id);
+            // ... mais attend le porteur s'il traîne trop loin (hors combat).
+            let player_far = self.player.and_then(|p| self.get(p)).filter(|p| p.alive).map(|p| p.pos.distance(self.fighters[i].pos) > 9.0).unwrap_or(false);
+            let t = if t.is_none() && is_npc_leader && order != Order::Regroup && !player_far { self.nearest_enemy(i, 999.0) } else { t };
+            if t.is_none() && is_npc_leader && player_far {
+                let pp = self.player.and_then(|p| self.get(p)).map(|p| p.pos).unwrap_or(self.fighters[i].pos);
+                let f = &mut self.fighters[i];
+                f.target = None;
+                f.ai_move = if pp.distance(f.pos) > 6.0 { (pp - f.pos).normalize_or_zero() * 0.6 } else { Vec2::ZERO };
+                return;
+            }
             self.fighters[i].target = t;
         }
         let leader_pos = self.leader.and_then(|l| self.get(l)).filter(|l| l.alive).map(|l| l.pos);

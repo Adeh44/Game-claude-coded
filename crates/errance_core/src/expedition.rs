@@ -98,7 +98,8 @@ pub fn layout_zone(z: &ZoneDef, rng: &mut Rng) -> Layout {
 }
 
 /// Crée le combat de l'expédition. Renvoie le combat et l'id du héros.
-pub fn setup_combat(c: &Content, layout: &Layout, hero: FighterSpec, party: Vec<FighterSpec>, seed: u64) -> (Combat, FighterId, Vec<FighterId>) {
+/// Si `party_leads` : le premier du groupe est le chef (mode porteur).
+pub fn setup_combat(c: &Content, layout: &Layout, hero: FighterSpec, party: Vec<FighterSpec>, seed: u64, party_leads: bool) -> (Combat, FighterId, Vec<FighterId>) {
     let obstacles = layout.decor.iter().filter(|d| d.1 > 0.0).map(|d| (d.0, d.1)).collect();
     let mut combat = Combat::new(seed, Arena { half_extent: Vec2::new(layout.half, layout.half), obstacles });
     let hero_controlled = hero.controller == Controller::Player;
@@ -108,7 +109,7 @@ pub fn setup_combat(c: &Content, layout: &Layout, hero: FighterSpec, party: Vec<
         let off = Vec2::new((k as f32 - 1.0) * 1.3, 1.4);
         ids.push(combat.spawn(spec, layout.start + off));
     }
-    if !hero_controlled {
+    if !hero_controlled || party_leads {
         combat.leader = ids.first().copied().or(Some(hid));
     }
     let mut rng = Rng::new(seed ^ 0xABCD);

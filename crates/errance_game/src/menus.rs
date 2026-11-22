@@ -26,6 +26,7 @@ pub struct MenuState {
     pub shop: Vec<Item>,
     pub shop_day: u32,
     pub scroll: f32,
+    pub npc_skill: Option<SkillSlot>,
 }
 
 #[derive(Component)]
@@ -74,7 +75,7 @@ fn menu_actions(
     let mut keep = vec![];
     let in_town = *state.get() == AppState::Town;
     for a in queue.take() {
-        match a {
+        match a.clone() {
             UiAction::OpenBag => {
                 ov.0 = Some(Panel::Bag);
                 menu.bag_sel = None;
@@ -96,7 +97,7 @@ fn menu_actions(
                     }
                 }
                 ov.0 = match &ov.0 {
-                    Some(Panel::Npc(_)) => Some(Panel::Tavern),
+                    Some(Panel::Npc(_)) | Some(Panel::Company(_)) => Some(Panel::Tavern),
                     Some(Panel::Chore(_)) => Some(Panel::Chores),
                     _ => None,
                 };
@@ -168,7 +169,11 @@ fn menu_actions(
                 ov.0 = None;
                 next.set(AppState::Field);
             }
-            UiAction::InspectNpc(id) => ov.0 = Some(Panel::Npc(id)),
+            UiAction::InspectNpc(id) => {
+                ov.0 = Some(Panel::Npc(id));
+                menu.tab = 0;
+                menu.npc_skill = None;
+            }
             UiAction::Hire(id) => {
                 let price = game.0.world.npc(id).map(|n| n.hire_price()).unwrap_or(0);
                 if game.0.world.party().len() >= 3 {
@@ -222,11 +227,72 @@ fn menu_actions(
                     toasts.push("Une nuit coûte 2 po. Vous dormirez dehors...".into());
                 }
             }
+            UiAction::OpenCompany(id) => ov.0 = Some(Panel::Company(id)),
+            UiAction::JoinCompany(cid) => {
+                let tier = game.0.world.company(cid).and_then(|co| game.0.world.npc(co.leader)).map(|l| l.sheet.power_tier()).unwrap_or(2);
+                let zone = c.zones.iter().filter(|z| z.tier <= tier.max(2)).max_by_key(|z| z.tier).map(|z| z.id.clone()).unwrap_or_else(|| "marches".into());
+                commands.insert_resource(crate::field::Expedition { zone, party: vec![], porter_for: Some(cid) });
+                ov.0 = None;
+                next.set(AppState::Field);
+            }
+            UiAction::GiveItem(nid, i) => {
+                if i < game.0.bag.len() {
+                    let item = game.0.bag.remove(i);
+                    let g = &mut game.0;
+                    match g.world.npc_mut(nid) {
+                        Some(n) => match n.sheet.equip(c, item) {
+                            Ok(removed) => {
+                                for r in removed {
+                                    g.bag.push(r);
+                                }
+                                n.affinity += 1;
+                                toasts.push(format!("{} s'équipe.", n.sheet.name));
+                            }
+                            Err((_, item)) => {
+                                toasts.push(format!("{} ne maîtrise pas assez cette Voie pour ce tier.", n.sheet.name));
+                                g.bag.insert(i.min(g.bag.len()), item);
+                            }
+                        },
+                        None => g.bag.insert(i, item),
+                    }
+                }
+            }
+            UiAction::TakeItem(nid, slot) => {
+                let g = &mut game.0;
+                if g.bag.len() < errance_core::profile::BAG_SIZE {
+                    if let Some(it) = g.world.npc_mut(nid).and_then(|n| n.sheet.unequip(c, slot)) {
+                        g.bag.push(it);
+                    }
+                }
+            }
+            UiAction::NpcPickSkill(_, slot) => menu.npc_skill = Some(slot),
+            UiAction::NpcChooseSkill(nid, slot, id) => {
+                if let Some(n) = game.0.world.npc_mut(nid) {
+                    n.sheet.choose_skill(c, slot, &id);
+                }
+                menu.npc_skill = None;
+            }
+            UiAction::NpcToggleTalent(nid, id) => {
+                if let Some(n) = game.0.world.npc_mut(nid) {
+                    if !n.sheet.toggle_talent(c, &id) {
+                        toasts.push("Plus d'emplacement de talent libre.".into());
+                    }
+                }
+            }
+            UiAction::RuleUp(nid, i) | UiAction::RuleDown(nid, i) | UiAction::RuleToggle(nid, i) | UiAction::RuleDelete(nid, i) | UiAction::RuleCycle(nid, i) | UiAction::RuleAdd(nid, i) => {
+                let act = a.clone();
+                if let Some(n) = game.0.world.npc_mut(nid) {
+                    edit_rules(&mut n.sheet.rules, &act, i);
+                }
+            }
             UiAction::Save => {
                 crate::save::save(&game.0);
                 toasts.push("Partie sauvegardée.".into());
             }
-            other => keep.push(other),
+            other => {
+                keep.push(other);
+                continue;
+            }
         }
         menu.dirty = true;
     }
@@ -314,12 +380,19 @@ fn rebuild_panel(
         Panel::Summary => build_summary(&mut commands, body, &fonts, &menu),
         Panel::Market => build_market(&mut commands, body, &fonts, p, &menu),
         Panel::Tavern => build_tavern(&mut commands, body, &fonts, p),
-        Panel::Npc(id) => build_npc(&mut commands, body, &fonts, p, id),
+        Panel::Npc(id) => {
+            let mine = p.world.npc(id).map(|n| n.companion).unwrap_or(false);
+            if mine && menu.tab == 1 {
+                build_npc_manage(&mut commands, body, &fonts, p, id, &menu)
+            } else {
+                build_npc(&mut commands, body, &fonts, p, id)
+            }
+        }
         Panel::Gate => build_gate(&mut commands, body, &fonts, p),
         Panel::Inn => build_inn(&mut commands, body, &fonts, p),
         Panel::Chores => crate::minigames::build_chore_list(&mut commands, body, &fonts, p),
         Panel::Chore(id) => crate::minigames::build_chore_game(&mut commands, body, &fonts, &id),
-        Panel::Company(_) => {}
+        Panel::Company(id) => build_company(&mut commands, body, &fonts, p, id),
     }
 }
 
@@ -330,6 +403,7 @@ fn scroll_col(width: Val) -> impl Bundle {
             flex_direction: FlexDirection::Column,
             row_gap: px(4),
             width,
+            flex_shrink: 0.0,
             overflow: Overflow::scroll_y(),
             min_height: px(0),
             ..default()
@@ -698,7 +772,13 @@ fn build_tavern(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &erranc
                 ));
             }
         });
-        b.spawn(scroll_col(Val::Auto)).insert(Node { flex_grow: 1.0, flex_direction: FlexDirection::Column, row_gap: px(4), ..default() }).with_children(|col| {
+        b.spawn(scroll_col(Val::Auto)).insert(Node { flex_grow: 1.0, flex_direction: FlexDirection::Column, row_gap: px(4), overflow: Overflow::scroll_y(), ..default() }).with_children(|col| {
+            col.spawn(ui::bold(fonts, "Compagnies (elles cherchent toujours des porteurs)", 13.0, pal::INK));
+            for co in &p.world.companies {
+                let rep = p.reputation.get(&format!("co:{}", co.id)).copied().unwrap_or(0);
+                let rank = errance_core::world::Rank::from_rep(rep);
+                col.spawn(ui::button(fonts, format!("{} — votre rang : {}", co.name, rank.label()), UiAction::OpenCompany(co.id), percent(100), 11.0));
+            }
             col.spawn(ui::bold(fonts, "Votre groupe", 13.0, pal::INK));
             let party = p.world.party();
             if party.is_empty() {
@@ -743,6 +823,9 @@ fn build_npc(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_c
             col.spawn(ui::label(fonts, format!("Règles :\n{}", rules.join("\n")), 10.0, pal::DIM));
         });
         b.spawn(Node { flex_direction: FlexDirection::Column, row_gap: px(6), ..default() }).with_children(|col| {
+            if n.companion {
+                col.spawn(ui::button(fonts, "Gérer : équipement, skills, règles", UiAction::Tab(1), px(260), 12.0));
+            }
             let in_party = n.companion || n.hired_for > 0;
             if !in_party {
                 col.spawn(ui::button(fonts, format!("Engager ({} po, 1 expédition)", n.hire_price()), UiAction::Hire(n.id), px(240), 12.0));
@@ -801,6 +884,142 @@ fn build_inn(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_c
             col.spawn(ui::button(fonts, "Sauvegarder", UiAction::Save, px(200), 12.0));
             let c = &p.counters;
             col.spawn(ui::label(fonts, format!("Jour {} · Ennemis vaincus : {} · Chutes : {} · Corvées : {} · Expéditions : {}", p.day, c.kills, c.deaths, c.chores, c.expeditions), 11.0, pal::DIM));
+        });
+    });
+}
+
+/// Actions de la liste d'actions possibles pour une règle (cycle).
+fn action_cycle() -> Vec<errance_core::rules::Action> {
+    use errance_core::rules::Action;
+    let mut v: Vec<Action> = SkillSlot::ACTIVE.iter().map(|s| Action::Use(*s)).collect();
+    v.push(Action::Use(SkillSlot::Potion));
+    v.push(Action::Regroup);
+    v.push(Action::Retreat);
+    v
+}
+
+fn edit_rules(rules: &mut Vec<errance_core::rules::Rule>, act: &UiAction, i: usize) {
+    use errance_core::rules::{Action, Condition, Rule};
+    match act {
+        UiAction::RuleUp(..) if i > 0 && i < rules.len() => rules.swap(i, i - 1),
+        UiAction::RuleDown(..) if i + 1 < rules.len() => rules.swap(i, i + 1),
+        UiAction::RuleToggle(..) => {
+            if let Some(r) = rules.get_mut(i) {
+                r.enabled = !r.enabled;
+            }
+        }
+        UiAction::RuleDelete(..) if i < rules.len() => {
+            rules.remove(i);
+        }
+        UiAction::RuleCycle(..) => {
+            if let Some(r) = rules.get_mut(i) {
+                let cyc = action_cycle();
+                let k = cyc.iter().position(|a| *a == r.then).map(|k| (k + 1) % cyc.len()).unwrap_or(0);
+                r.then = cyc[k];
+            }
+        }
+        UiAction::RuleAdd(..) => {
+            let pal = Condition::palette();
+            if let Some(cond) = pal.get(i) {
+                if rules.len() < 10 {
+                    rules.push(Rule::new(*cond, Action::Use(SkillSlot::Weapon1)));
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn build_company(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_core::profile::Profile, cid: u32) {
+    let c = content();
+    let Some(co) = p.world.company(cid) else { return };
+    let rep = p.reputation.get(&format!("co:{cid}")).copied().unwrap_or(0);
+    let rank = errance_core::world::Rank::from_rep(rep);
+    commands.entity(body).with_children(|b| {
+        b.spawn(scroll_col(px(380))).with_children(|col| {
+            col.spawn(ui::bold(fonts, co.name.clone(), 16.0, rgb(co.color)));
+            col.spawn(ui::label(fonts, format!("Renommée : {} · Votre rang : {} (réputation {rep})", co.renown, rank.label()), 11.5, pal::INK));
+            if let Some(l) = p.world.npc(co.leader) {
+                col.spawn(ui::label(fonts, format!("Chef : {} — {} (T{})", l.sheet.name, l.sheet.role(c).title, l.sheet.power_tier()), 12.0, pal::GOLD));
+            }
+            for m in co.members.iter().filter(|m| **m != co.leader) {
+                if let Some(n) = p.world.npc(*m) {
+                    let name = if rank >= errance_core::world::Rank::Member { n.sheet.name.clone() } else { "Un membre".to_string() };
+                    col.spawn(ui::label(fonts, format!("• {name} — {} (T{})", n.sheet.role(c).title, n.sheet.power_tier()), 11.0, pal::INK));
+                }
+            }
+        });
+        b.spawn(Node { flex_direction: FlexDirection::Column, row_gap: px(6), flex_grow: 1.0, ..default() }).with_children(|col| {
+            let txt = match rank {
+                errance_core::world::Rank::Porter => "« Un porteur ? Bon. Tu portes la torche, tu ramasses le butin, tu restes derrière. Et tu ne touches à rien. »",
+                errance_core::world::Rank::Recruit => "« La recrue revient. Tu as tenu, la dernière fois. Cette fois, tu peux frapper — mais pas avant moi. »",
+                errance_core::world::Rank::Member => "« Te voilà. Prends ta part, tu l'as méritée. »",
+                errance_core::world::Rank::Veteran => "« On t'attendait. Les nouveaux te regardent, tu sais. »",
+                errance_core::world::Rank::Officer => "« Qu'est-ce que tu en penses, toi ? On passe par où ? »",
+            };
+            col.spawn(ui::label(fonts, txt, 12.0, pal::INK));
+            col.spawn(ui::label(fonts, format!("Part du butin à votre rang : {:.0} %", rank.share() * 100.0), 11.0, pal::DIM));
+            col.spawn(ui::button(fonts, "Partir avec eux", UiAction::JoinCompany(cid), px(220), 13.0));
+            col.spawn(ui::label(fonts, "Rangs : Porteur → Recrue (30) → Membre (100) → Vétéran (250) → Officier (500).", 10.5, pal::DIM));
+        });
+    });
+}
+
+fn build_npc_manage(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_core::profile::Profile, id: u32, menu: &MenuState) {
+    use errance_core::rules::Condition;
+    let c = content();
+    let Some(n) = p.world.npc(id) else { return };
+    commands.entity(body).with_children(|b| {
+        // Équipement + sac.
+        b.spawn(scroll_col(px(250))).with_children(|col| {
+            col.spawn(ui::bold(fonts, format!("{} porte", n.sheet.name), 12.5, pal::INK));
+            for slot in EquipSlot::ALL {
+                if let Some(it) = n.sheet.item(slot) {
+                    col.spawn(item_row(fonts, it, UiAction::TakeItem(id, slot), false, "reprendre".into()));
+                }
+            }
+            col.spawn(ui::bold(fonts, "Donner depuis votre sac", 12.5, pal::INK));
+            for (i, it) in p.bag.iter().enumerate() {
+                col.spawn(item_row(fonts, it, UiAction::GiveItem(id, i), false, "donner".into()));
+            }
+        });
+        // Skills & talents.
+        b.spawn(scroll_col(px(240))).with_children(|col| {
+            col.spawn(ui::bold(fonts, "Skills", 12.5, pal::INK));
+            for slot in SkillSlot::ACTIVE {
+                let cur = n.sheet.skills.get(&slot).and_then(|s| c.skill(s)).map(|s| s.name.clone()).unwrap_or("—".into());
+                col.spawn(ui::button(fonts, format!("{} : {cur}", slot.label()), UiAction::NpcPickSkill(id, slot), percent(100), 10.5));
+                if menu.npc_skill == Some(slot) {
+                    for s in n.sheet.available_skills(c, slot) {
+                        col.spawn(ui::button_colored(fonts, format!("→ {}", s.name), UiAction::NpcChooseSkill(id, slot, s.id.clone()), percent(100), 10.0, Color::srgba(0.2, 0.3, 0.2, 0.95)));
+                    }
+                }
+            }
+            col.spawn(ui::bold(fonts, format!("Talents ({}/{})", n.sheet.talents.len(), n.sheet.talent_slots()), 12.5, pal::INK));
+            for t in n.sheet.unlocked_talents(c) {
+                let on = n.sheet.talents.contains(&t.id);
+                col.spawn(ui::button_colored(fonts, format!("{}{}", if on { "[x] " } else { "" }, t.name), UiAction::NpcToggleTalent(id, t.id.clone()), percent(100), 10.0, if on { Color::srgba(0.2, 0.35, 0.18, 0.95) } else { pal::BUTTON }));
+            }
+        });
+        // Règles.
+        b.spawn(scroll_col(Val::Auto)).insert(Node { flex_grow: 1.0, flex_direction: FlexDirection::Column, row_gap: px(3), overflow: Overflow::scroll_y(), ..default() }).with_children(|col| {
+            col.spawn(ui::bold(fonts, "Règles (de haut en bas, la première possible gagne)", 12.5, pal::INK));
+            for (k, r) in n.sheet.rules.iter().enumerate() {
+                col.spawn(ui::row()).with_children(|row| {
+                    row.spawn(ui::button(fonts, "^", UiAction::RuleUp(id, k), px(24), 10.0));
+                    row.spawn(ui::button(fonts, "v", UiAction::RuleDown(id, k), px(24), 10.0));
+                    row.spawn((Text::new(format!("Si {}", r.when.label())), font(&fonts.regular, 10.5), TextColor(if r.enabled { pal::INK } else { pal::DIM }), Node { width: px(130), ..default() }));
+                    row.spawn(ui::button(fonts, r.then.label(), UiAction::RuleCycle(id, k), px(120), 10.0));
+                    row.spawn(ui::button(fonts, if r.enabled { "on" } else { "off" }, UiAction::RuleToggle(id, k), px(34), 10.0));
+                    row.spawn(ui::button(fonts, "x", UiAction::RuleDelete(id, k), px(24), 10.0));
+                });
+            }
+            col.spawn(ui::bold(fonts, "Ajouter une règle :", 11.5, pal::GOLD));
+            col.spawn(Node { flex_direction: FlexDirection::Row, flex_wrap: FlexWrap::Wrap, column_gap: px(3), row_gap: px(3), ..default() }).with_children(|w| {
+                for (k, cond) in Condition::palette().iter().enumerate() {
+                    w.spawn(ui::button(fonts, cond.label(), UiAction::RuleAdd(id, k), Val::Auto, 9.5));
+                }
+            });
         });
     });
 }

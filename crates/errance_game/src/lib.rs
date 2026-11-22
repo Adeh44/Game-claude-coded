@@ -250,11 +250,15 @@ fn demo_driver(
             }
             p.gold = 137;
         }
-        if parts.contains(&"party") {
+        if parts.contains(&"party") || parts.contains(&"companion") {
             let ids: Vec<u32> = p.world.tavern().iter().take(2).map(|n| n.id).collect();
             for id in &ids {
                 if let Some(n) = p.world.npc_mut(*id) {
-                    n.hired_for = 1;
+                    if parts.contains(&"companion") {
+                        n.companion = true;
+                    } else {
+                        n.hired_for = 1;
+                    }
                 }
             }
         }
@@ -277,6 +281,23 @@ fn demo_driver(
                 Some("gate") => overlay.0 = Some(Panel::Gate),
                 Some("chores") => overlay.0 = Some(Panel::Chores),
                 Some("market") => overlay.0 = Some(Panel::Market),
+                Some("company") => {
+                    if let Some(co) = g.0.world.companies.first() {
+                        queue.0.push(UiAction::OpenCompany(co.id));
+                    }
+                }
+                Some("porter") => {
+                    if let Some(co) = g.0.world.companies.first() {
+                        queue.0.push(UiAction::JoinCompany(co.id));
+                    }
+                }
+                Some("companion") => {
+                    if let Some(n) = g.0.world.party().first() {
+                        let id = n.id;
+                        queue.0.push(UiAction::InspectNpc(id));
+                        queue.0.push(UiAction::Tab(1));
+                    }
+                }
                 Some("chore") => queue.0.push(UiAction::StartChore(parts.get(1).copied().unwrap_or("caisses_du_port").to_string())),
                 _ => {}
             }
