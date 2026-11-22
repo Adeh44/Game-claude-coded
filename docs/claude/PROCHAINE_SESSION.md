@@ -3,7 +3,7 @@
 ## État réel (fin de nuit 22/11/2026)
 - Version : v0.7, branche `claude/mobile-rpg-game-design-o55gg9`.
 - **Tout est commité en local, rien n'est poussé** : push refusé (403, app Claude GitHub absente du dépôt). Si la machine cloud a été recyclée, le travail est perdu sauf si le push a réussi entre-temps. Vérifier en premier.
-- APK : jamais construit (la CI n'a jamais tourné). Projet Android « prédit », pas « mesuré ».
+- APK : jamais construit (la CI n'a jamais tourné). Le code Rust passe `cargo check --target aarch64-linux-android` (mesuré) ; Gradle + GameActivity restent « prédits ».
 - Tests : `cargo test -p errance_core` → 38 tests verts. Clippy propre sur core + sim.
 - Jeu testé sur PC uniquement (rendu logiciel, souris simulée).
 
