@@ -225,7 +225,14 @@ fn new_run(id: &str, seed: u64) -> Option<ChoreRun> {
 
 fn new_sequence(run: &mut ChoreRun) {
     let n = 3 + (run.score as usize).min(2);
-    run.seq = (0..n).map(|_| run.rng.index(6)).collect();
+    let mut seq: Vec<usize> = vec![];
+    while seq.len() < n {
+        let d = run.rng.index(6);
+        if seq.last() != Some(&d) {
+            seq.push(d);
+        }
+    }
+    run.seq = seq;
     run.seq_pos = 0;
 }
 
@@ -390,7 +397,7 @@ fn chore_tick(
                 // Les caisses avancent sur le tapis ; tombent au bout.
                 for i in 0..SLOTS {
                     if r.slots[i].active && r.carried != Some(i) {
-                        r.slots[i].x += 55.0 * dt;
+                        r.slots[i].x += 45.0 * dt;
                         if r.slots[i].x > 330.0 {
                             r.slots[i].active = false;
                             r.feedback = "Une caisse est tombée à l'eau !".into();

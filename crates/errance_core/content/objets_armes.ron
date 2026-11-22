@@ -118,7 +118,7 @@
      mods: [(stat: HealPower, kind: Flat, value: 7.0), (stat: MagicPower, kind: Flat, value: 4.0), (stat: HpRegen, kind: Flat, value: 0.5)]),
 
     // ---------- Maudit ----------
-    (id: "baguette_maudite", name: "Os gravé", slot: MainHand, line: "maudit", material: Wood, basic: "trait_d_ombre",
+    (id: "baguette_maudite", name: "Baguette maudite", slot: MainHand, line: "maudit", material: Wood, basic: "trait_d_ombre",
      model: "baguette",
      mods: [(stat: MagicPower, kind: Flat, value: 5.0)]),
     (id: "baton_maudit", name: "Bâton maudit", slot: MainHand, line: "maudit", material: Wood, basic: "trait_d_ombre",

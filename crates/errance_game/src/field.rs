@@ -467,6 +467,13 @@ fn field_input(
                 } else if !near_exit {
                     toasts.push("Retournez au feu de camp pour rentrer.".into());
                 } else {
+                    // On ramasse ce qui traîne près du camp avant de partir.
+                    let near: Vec<usize> = field.ground.iter().enumerate().filter(|(_, g)| g.pos.distance(field.exit) < 12.0).map(|(i, _)| i).collect();
+                    for i in near.into_iter().rev() {
+                        let g = field.ground.remove(i);
+                        field.gold += g.gold;
+                        field.loot.extend(g.items);
+                    }
                     field.end = Some(End::Return);
                     menu.summary = finish_expedition(&mut game, &mut field);
                     menu.dirty = true;

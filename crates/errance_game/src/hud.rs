@@ -62,7 +62,7 @@ struct TargetHp;
 #[derive(Component)]
 struct TargetCast;
 #[derive(Component)]
-struct PartyFrame(FighterId);
+struct PartyFrame(#[allow(dead_code)] FighterId);
 #[derive(Component)]
 struct PartyHp(FighterId);
 #[derive(Component)]

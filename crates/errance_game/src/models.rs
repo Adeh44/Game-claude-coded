@@ -180,7 +180,6 @@ fn darker(c: Rgb, k: f32) -> Rgb {
 
 const WOOD: Rgb = (0.42, 0.29, 0.17);
 const LEATHER: Rgb = (0.35, 0.23, 0.14);
-const CLOTH: Rgb = (0.5, 0.44, 0.34);
 
 /// Couleur de l'élément d'un bâton.
 fn gem_color(model: &str) -> Rgb {

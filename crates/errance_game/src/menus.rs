@@ -32,12 +32,15 @@ pub struct MenuState {
 #[derive(Component)]
 struct PanelRoot;
 
+#[derive(Component)]
+struct PanelGold;
+
 pub struct MenusPlugin;
 
 impl Plugin for MenusPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MenuState>()
-            .add_systems(Update, (menu_actions, rebuild_panel).chain().run_if(not(in_state(AppState::Title))))
+            .add_systems(Update, (menu_actions, rebuild_panel, panel_gold).chain().run_if(not(in_state(AppState::Title))))
             .add_systems(OnExit(AppState::Field), close_overlay)
             .add_systems(OnExit(AppState::Town), close_overlay);
     }
@@ -383,7 +386,7 @@ fn rebuild_panel(
             .with_children(|r| {
                 r.spawn(ui::title(&fonts, title, 18.0, pal::GOLD));
                 r.spawn(ui::row()).with_children(|rr| {
-                    rr.spawn(ui::bold(&fonts, format!("{} po", game.0.gold), 13.0, pal::GOLD));
+                    rr.spawn((Text::new(format!("{} po", game.0.gold)), ui::font(&fonts.bold, 13.0), TextColor(pal::GOLD), PanelGold));
                     if panel != Panel::Chore(String::new()) {
                         rr.spawn(ui::button(&fonts, close_label, UiAction::Close, px(if panel == Panel::Summary { 150.0 } else { 90.0 }), 12.0));
                     }
@@ -1074,4 +1077,14 @@ fn build_intro(commands: &mut Commands, body: Entity, fonts: &Fonts) {
             }
         });
     });
+}
+
+fn panel_gold(game: Option<Res<Game>>, mut q: Query<&mut Text, With<PanelGold>>) {
+    let Some(game) = game else { return };
+    if !game.is_changed() {
+        return;
+    }
+    for mut t in q.iter_mut() {
+        **t = format!("{} po", game.0.gold);
+    }
 }

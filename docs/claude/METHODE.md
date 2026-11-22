@@ -35,4 +35,5 @@
 | Panique « duplicate components » | Un bundle contenant deux `Node` (bouton + position) | Envelopper dans un nœud parent |
 | Symboles (★ ✓ ◇ 🔒 ⟳) invisibles | Absents de la police Alegreya Sans | Rester en texte simple (*, ok, -, (verrou)) |
 | Le jeu panique sous Xvfb : `libxkbcommon-x11.so` | Lib manquante dans le conteneur | `apt-get install libxkbcommon-x11-0` |
+| `cargo check --target aarch64-linux-android` échoue (blake3, android-activity) | Pas de NDK ici (dl.google.com bloqué) | Vérif possible avec le backend `android-native-activity` + `CC_aarch64_linux_android=clang` + `CFLAGS_aarch64_linux_android="--target=aarch64-linux-gnu -isystem /usr/aarch64-linux-gnu/include"` (paquet `libc6-dev-arm64-cross`). Ne pas commiter le changement de backend. |
 | Bouton qui n'agit pas sur le skill | Les boutons de skill doivent réagir à l'appui | `ActivateOnPress` (`ui::instant()`) |
