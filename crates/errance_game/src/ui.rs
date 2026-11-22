@@ -95,6 +95,9 @@ pub enum UiAction {
     RuleAdd(u32, usize),
     Rest,
     Save,
+    ToggleMusic,
+    ToggleSfx,
+    FoundCompany,
     /// Rien (bouton décoratif / désactivé).
     None,
 }
@@ -123,13 +126,17 @@ impl Plugin for UiPlugin {
             .init_resource::<UiQueue>()
             .add_observer(on_activate)
             .add_observer(on_scroll)
-            .add_systems(Update, (button_feedback, ui_scale, send_scroll_events));
+            .add_systems(Update, (button_feedback, ui_scale, send_scroll_events))
+            .add_systems(PostUpdate, |mut q: ResMut<UiQueue>| q.0.clear());
     }
 }
 
-fn on_activate(ev: On<Activate>, q: Query<&UiAction>, mut queue: ResMut<UiQueue>) {
+fn on_activate(ev: On<Activate>, q: Query<&UiAction>, mut queue: ResMut<UiQueue>, mut sfx: MessageWriter<crate::audio::PlaySfx>) {
     if let Ok(a) = q.get(ev.entity) {
         if *a != UiAction::None {
+            if !matches!(a, UiAction::Skill(_) | UiAction::ChoreTap(_)) {
+                sfx.write(crate::audio::PlaySfx(crate::audio::Sfx::Click));
+            }
             queue.0.push(a.clone());
         }
     }

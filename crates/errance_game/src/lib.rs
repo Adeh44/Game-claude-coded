@@ -1,6 +1,7 @@
 //! Errance — le jeu (Bevy). Affichage 3D, tactile et interface ; toutes les
 //! règles vivent dans `errance_core`.
 
+pub mod audio;
 pub mod field;
 pub mod hud;
 pub mod menus;
@@ -86,7 +87,7 @@ pub fn main() {
         .init_state::<AppState>()
         .init_resource::<Overlay>()
         .init_resource::<Toasts>()
-        .add_plugins((ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin))
+        .add_plugins((audio::AudioPlugin, ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin))
         .add_systems(Startup, (setup_lib, setup_ui_camera))
         .add_systems(OnEnter(AppState::Title), build_title)
         .add_systems(Update, (title_actions.run_if(in_state(AppState::Title)), show_toasts, auto_screenshot, demo_driver, save::autosave))

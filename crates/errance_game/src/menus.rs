@@ -285,6 +285,23 @@ fn menu_actions(
                     edit_rules(&mut n.sheet.rules, &act, i);
                 }
             }
+            UiAction::FoundCompany => match game.0.can_found_company() {
+                Ok(()) => {
+                    game.0.spend(200);
+                    let name = format!("La Compagnie de {}", if game.0.hero.name == "Vous" { "l'Errant" } else { game.0.hero.name.as_str() });
+                    game.0.own_company = Some(name.clone());
+                    for n in game.0.world.npcs.iter_mut().filter(|n| n.companion) {
+                        n.affinity += 10;
+                    }
+                    toasts.push(format!("{name} est fondée !"));
+                    toasts.push("Un jeune porteur se présente, torche à la main. Il vous regarde comme vous regardiez les autres.".into());
+                }
+                Err(e) => toasts.push(e),
+            },
+            UiAction::ToggleMusic | UiAction::ToggleSfx => {
+                keep.push(a.clone());
+                continue;
+            }
             UiAction::Save => {
                 crate::save::save(&game.0);
                 toasts.push("Partie sauvegardée.".into());
@@ -785,6 +802,14 @@ fn build_tavern(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &erranc
                 let rank = errance_core::world::Rank::from_rep(rep);
                 col.spawn(ui::button(fonts, format!("{} — votre rang : {}", co.name, rank.label()), UiAction::OpenCompany(co.id), percent(100), 11.0));
             }
+            match &p.own_company {
+                Some(name) => {
+                    col.spawn(ui::bold(fonts, format!("Votre compagnie : {name}"), 13.0, pal::GOLD));
+                }
+                None => {
+                    col.spawn(ui::button(fonts, "Fonder ma propre compagnie (200 po)", UiAction::FoundCompany, percent(100), 11.0));
+                }
+            }
             col.spawn(ui::bold(fonts, "Votre groupe", 13.0, pal::INK));
             let party = p.world.party();
             if party.is_empty() {
@@ -888,6 +913,10 @@ fn build_inn(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_c
             col.spawn(ui::label(fonts, "La patronne essuie un verre en vous regardant de haut en bas.\n« Une paillasse, c'est 2 pièces. D'avance. »", 12.0, pal::INK));
             col.spawn(ui::button(fonts, "Dormir (2 po) — la journée passe, sauvegarde", UiAction::Rest, px(360), 12.0));
             col.spawn(ui::button(fonts, "Sauvegarder", UiAction::Save, px(200), 12.0));
+            col.spawn(ui::row()).with_children(|r| {
+                r.spawn(ui::button(fonts, "Musique : on/off", UiAction::ToggleMusic, px(170), 12.0));
+                r.spawn(ui::button(fonts, "Bruitages : on/off", UiAction::ToggleSfx, px(170), 12.0));
+            });
             let c = &p.counters;
             col.spawn(ui::label(fonts, format!("Jour {} · Ennemis vaincus : {} · Chutes : {} · Corvées : {} · Expéditions : {}", p.day, c.kills, c.deaths, c.chores, c.expeditions), 11.0, pal::DIM));
         });

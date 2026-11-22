@@ -40,6 +40,9 @@ pub struct Profile {
     pub reputation: BTreeMap<String, i32>,
     #[serde(default)]
     pub world: crate::world::World,
+    /// Votre propre compagnie, une fois fondée.
+    #[serde(default)]
+    pub own_company: Option<String>,
 }
 
 impl Profile {
@@ -58,6 +61,7 @@ impl Profile {
             flags: vec![],
             reputation: BTreeMap::new(),
             world: crate::world::World::default(),
+            own_company: None,
         };
         let rags = p.new_item("haillons", 1);
         let _ = hero.equip(c, rags);
@@ -181,6 +185,30 @@ impl Profile {
                 self.hero.equipment.remove(&EquipSlot::Potion);
             }
         }
+    }
+
+    /// Peut-on fonder sa compagnie ? Il faut avoir fait ses preuves.
+    pub fn can_found_company(&self) -> Result<(), String> {
+        if self.own_company.is_some() {
+            return Err("Vous avez déjà votre compagnie.".into());
+        }
+        let best_rank = self
+            .reputation
+            .iter()
+            .filter(|(k, _)| k.starts_with("co:"))
+            .map(|(_, v)| crate::world::Rank::from_rep(*v))
+            .max()
+            .unwrap_or_default();
+        let mastery = self.hero.masteries.total();
+        if best_rank < crate::world::Rank::Veteran && mastery < 250 {
+            return Err(format!(
+                "Personne ne suivrait un inconnu. Il faut être Vétéran d'une compagnie, ou 250 de maîtrise totale (vous : {mastery})."
+            ));
+        }
+        if self.gold < 200 {
+            return Err("Fonder une compagnie coûte 200 po (charte, bannière, tonneau de bière).".into());
+        }
+        Ok(())
     }
 
     pub fn to_ron(&self) -> String {

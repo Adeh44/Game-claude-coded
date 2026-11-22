@@ -344,6 +344,7 @@ fn tap_slot(r: &mut ChoreRun, i: usize) {
 }
 
 fn reward(r: &ChoreRun, game: &mut Game, toasts: &mut Toasts) {
+    // (Le son de la paie est joué par l'appelant.)
     let c = content();
     let Some(ch) = c.chore(&r.id) else { return };
     let ratio = (r.score / r.goal.max(1.0)).clamp(0.0, 1.5);

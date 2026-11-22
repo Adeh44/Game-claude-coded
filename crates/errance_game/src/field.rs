@@ -3,6 +3,7 @@
 //! Le moteur de combat (errance_core) décide de tout ; ici on dessine,
 //! on transmet les gestes et on fabrique les effets visuels.
 
+use crate::audio::{PlaySfx, Sfx};
 use crate::hud::Stick;
 use crate::models::{AnimState, Finish, Lib, Limb, Painter, animate_limbs, col, spawn_look, spawn_rock, spawn_tree};
 use crate::ui::{Fonts, UiAction, UiQueue, pal};
@@ -201,7 +202,21 @@ pub fn setup_field(
             party_ids.push(*id);
         }
     }
-    let (combat, hero, fids) = setup_combat(c, &layout, hero_spec, party_specs, seed, exp.porter_for.is_some());
+    // Votre compagnie a son porteur : un débutant qui vous suit, torche à la main.
+    let porter_spec = p.own_company.as_ref().filter(|_| exp.porter_for.is_none()).map(|_| {
+        let mut kid = errance_core::character::Character::new("Le petit porteur");
+        kid.hair = (0.6, 0.35, 0.15);
+        let torch = errance_core::item::Item::new(9_999_999, "torche", 1);
+        let rags = errance_core::item::Item::new(9_999_998, "haillons", 1);
+        let _ = kid.equip(c, torch);
+        let _ = kid.equip(c, rags);
+        kid.fighter_spec(c, Team::Ally, Controller::Bystander)
+    });
+    let (mut combat, hero, fids) = setup_combat(c, &layout, hero_spec, party_specs, seed, exp.porter_for.is_some());
+    if let Some(spec) = porter_spec {
+        let at = layout.start + V2::new(0.0, 2.0);
+        combat.spawn(spec, at);
+    }
     let mut npc_of = HashMap::default();
     for (fid, nid) in fids.iter().zip(party_ids.iter()) {
         npc_of.insert(*fid, *nid);
@@ -217,7 +232,9 @@ pub fn setup_field(
     let gm = painter.mat(zone.ground, Finish::Matte);
     commands.spawn((Mesh3d(ground), MeshMaterial3d(gm), Transform::default(), scope.clone()));
     // Taches d'herbe / de terre pour casser l'uniformité.
-    for _ in 0..120 {
+    // Moins de décor sur téléphone (performances).
+    let light = cfg!(target_os = "android");
+    for _ in 0..(if light { 60 } else { 120 }) {
         let x = rng.range_f32(-layout.half - 8.0, layout.half + 8.0);
         let z = rng.range_f32(-layout.half - 8.0, layout.half + 8.0);
         let k = rng.range_f32(0.85, 1.15);
@@ -235,7 +252,7 @@ pub fn setup_field(
         ));
     }
     // Touffes d'herbe.
-    for _ in 0..260 {
+    for _ in 0..(if light { 110 } else { 260 }) {
         let x = rng.range_f32(-layout.half, layout.half);
         let z = rng.range_f32(-layout.half, layout.half);
         let cone = painter.lib.cone4.clone();
@@ -475,6 +492,7 @@ fn step_combat(
     mut toasts: ResMut<Toasts>,
     mut ov: ResMut<Overlay>,
     mut menu: ResMut<crate::menus::MenuState>,
+    mut sfx: MessageWriter<PlaySfx>,
 ) {
     if ov.0.is_some() || field.end.is_some() {
         return;
@@ -500,6 +518,9 @@ fn step_combat(
                     let size = if crit { 20.0 } else if src == hero || dst == hero { 15.0 } else { 12.0 };
                     let txt = if crit { format!("{:.0}!", amount) } else { format!("{:.0}", amount) };
                     spawn_float(&mut commands, &fonts, v3(f.pos, 2.0), txt, color, size);
+                    if src == hero || dst == hero || f.team == Team::Enemy {
+                        sfx.write(PlaySfx(if crit { Sfx::Crit } else { Sfx::Hit }));
+                    }
                     spawn_sparks(&mut commands, &mut painter, v3(f.pos, 1.0), kind_color(Some(kind)), if crit { 8 } else { 4 });
                 }
             }
@@ -508,12 +529,16 @@ fn step_combat(
                     if amount >= 1.0 {
                         spawn_float(&mut commands, &fonts, v3(f.pos, 2.1), format!("+{:.0}", amount), Color::srgb(0.45, 1.0, 0.45), 13.0);
                     }
+                    if amount >= 5.0 {
+                        sfx.write(PlaySfx(Sfx::Heal));
+                    }
                 }
             }
             CEvent::Shield { dst, amount } => {
                 if let Some(f) = field.combat.get(dst) {
                     spawn_float(&mut commands, &fonts, v3(f.pos, 2.2), format!("+{:.0}", amount), Color::srgb(0.8, 0.88, 1.0), 12.0);
                     spawn_flash(&mut commands, &mut painter, v3(f.pos, 0.05), 0.9, (0.8, 0.88, 1.0), 0.4, 1.4);
+                    sfx.write(PlaySfx(Sfx::Shield));
                 }
             }
             CEvent::Dodge { dst } => {
@@ -540,6 +565,9 @@ fn step_combat(
             }
             CEvent::SkillUsed { from, to, tags, slot, who, .. } => {
                 let color = tags_color(&tags);
+                if who == hero || slot != errance_core::skill::SkillSlot::Basic {
+                    sfx.write(PlaySfx(if tags.contains(&Tag::Spell) { Sfx::Spell } else { Sfx::Swing }));
+                }
                 if slot != errance_core::skill::SkillSlot::Basic {
                     if let Some(f) = field.combat.get(who) {
                         if let Some(s) = f.skill(slot) {
@@ -598,6 +626,7 @@ fn step_combat(
                 }
             }
             CEvent::ZoneResolved { center, .. } => {
+                sfx.write(PlaySfx(Sfx::Boom));
                 spawn_sparks(&mut commands, &mut painter, v3(center, 0.4), (1.0, 0.6, 0.3), 10);
             }
             CEvent::Death { who, .. } => {
@@ -605,6 +634,7 @@ fn step_combat(
                     Some(f) => (f.team, f.pos, f.key.clone(), f.name.clone()),
                     None => continue,
                 };
+                sfx.write(PlaySfx(Sfx::Death));
                 if team == Team::Enemy {
                     field.kills += 1;
                     game.0.counters.kills += 1;
@@ -660,6 +690,9 @@ fn step_combat(
         let delta = fame - seen;
         if fid == hero {
             let ups = game.0.hero.award_fame(c, delta);
+            if !ups.is_empty() {
+                sfx.write(PlaySfx(Sfx::LevelUp));
+            }
             for u in &ups {
                 let name = c.line(&u.line).map(|l| l.name.clone()).unwrap_or(u.line.clone());
                 toasts.push(format!("* {name} : niveau {} !", u.to));
@@ -931,7 +964,7 @@ fn camera_follow(time: Res<Time>, field: Res<Field>, mut cam: Query<&mut Transfo
     t.look_at(look, Vec3::Y);
 }
 
-fn pickup_loot(mut commands: Commands, mut field: ResMut<Field>, fonts: Res<Fonts>, mut toasts: ResMut<Toasts>) {
+fn pickup_loot(mut commands: Commands, mut field: ResMut<Field>, fonts: Res<Fonts>, mut toasts: ResMut<Toasts>, mut sfx: MessageWriter<PlaySfx>) {
     let c = content();
     let Some(h) = field.combat.get(field.hero) else { return };
     if !h.alive {
@@ -947,6 +980,7 @@ fn pickup_loot(mut commands: Commands, mut field: ResMut<Field>, fonts: Res<Font
     for i in picked.into_iter().rev() {
         let g = field.ground.remove(i);
         commands.entity(g.entity).despawn();
+        sfx.write(PlaySfx(Sfx::Coin));
         field.gold += g.gold;
         if g.gold > 0 {
             spawn_float(&mut commands, &fonts, v3(g.pos, 1.5), format!("+{} po", g.gold), pal::GOLD, 13.0);
