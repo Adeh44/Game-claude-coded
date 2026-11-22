@@ -25,11 +25,11 @@
      description: "Rend de l'énergie.",
      mods: []),
 
-    (id: "pain_dur", name: "Pain dur", slot: Food, material: Alchemy, model: "pain", max_tier: 2, weight: 2.0,
+    (id: "pain_dur", name: "Pain dur", slot: Food, material: Food, model: "pain", max_tier: 2, weight: 2.0,
      description: "Ça cale.",
      mods: [(stat: HpRegen, kind: Flat, value: 0.3)]),
-    (id: "ragout", name: "Ragoût", slot: Food, material: Alchemy, model: "ragout", min_tier: 2,
+    (id: "ragout", name: "Ragoût", slot: Food, material: Food, model: "ragout", min_tier: 2,
      mods: [(stat: MaxHp, kind: Percent, value: 0.06), (stat: HpRegen, kind: Flat, value: 0.4)]),
-    (id: "tourte", name: "Tourte épicée", slot: Food, material: Alchemy, model: "tourte", min_tier: 3,
+    (id: "tourte", name: "Tourte épicée", slot: Food, material: Food, model: "tourte", min_tier: 3,
      mods: [(stat: PhysicalPower, kind: Percent, value: 0.06), (stat: MagicPower, kind: Percent, value: 0.06)]),
 ]

@@ -9,7 +9,7 @@ use errance_core::character::{item_mods_with_bonus, item_name};
 use errance_core::combat::{Controller, Team};
 use errance_core::content::content;
 use errance_core::item::{EquipSlot, Item};
-use errance_core::loot::{item_value, random_item};
+use errance_core::loot::{buy_price, item_value, random_item};
 use errance_core::mastery::{LineCategory, level_for_tier};
 use errance_core::skill::SkillSlot;
 use errance_core::stats::Stat;
@@ -137,7 +137,7 @@ fn menu_actions(
             }
             UiAction::Buy(i) => {
                 if let Some(it) = menu.shop.get(i).cloned() {
-                    let price = item_value(&it).max(2);
+                    let price = buy_price(&it);
                     if game.0.gold < price {
                         toasts.push("Pas assez d'or.".into());
                     } else if game.0.add_to_bag(c, it.clone()) {
@@ -354,8 +354,13 @@ fn rebuild_panel(
         Panel::Gate => "Porte de la ville".into(),
         Panel::Inn => "Auberge".into(),
         Panel::Company(_) => "Compagnie".into(),
+        Panel::Intro => "Gué-Rouge".into(),
     };
-    let close_label = if panel == Panel::Summary { "Retour en ville" } else { "Fermer" };
+    let close_label = match panel {
+        Panel::Summary => "Retour en ville",
+        Panel::Intro => "Commencer",
+        _ => "Fermer",
+    };
     commands.entity(root).with_children(|p| {
         p.spawn(Node { flex_direction: FlexDirection::Row, align_items: AlignItems::Center, justify_content: JustifyContent::SpaceBetween, margin: UiRect::bottom(px(6)), ..default() })
             .with_children(|r| {
@@ -393,6 +398,7 @@ fn rebuild_panel(
         Panel::Chores => crate::minigames::build_chore_list(&mut commands, body, &fonts, p),
         Panel::Chore(id) => crate::minigames::build_chore_game(&mut commands, body, &fonts, &id),
         Panel::Company(id) => build_company(&mut commands, body, &fonts, p, id),
+        Panel::Intro => build_intro(&mut commands, body, &fonts),
     }
 }
 
@@ -733,7 +739,7 @@ fn build_market(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &erranc
         b.spawn(scroll_col(px(330))).with_children(|col| {
             col.spawn(ui::bold(fonts, "À vendre aujourd'hui", 13.0, pal::INK));
             for (i, it) in menu.shop.iter().enumerate() {
-                let price = item_value(it).max(2);
+                let price = buy_price(it);
                 col.spawn(item_row(fonts, it, UiAction::Buy(i), false, format!("{price} po")));
             }
         });
@@ -1020,6 +1026,23 @@ fn build_npc_manage(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &er
                     w.spawn(ui::button(fonts, cond.label(), UiAction::RuleAdd(id, k), Val::Auto, 9.5));
                 }
             });
+        });
+    });
+}
+
+fn build_intro(commands: &mut Commands, body: Entity, fonts: &Fonts) {
+    commands.entity(body).with_children(|b| {
+        b.spawn(Node { flex_direction: FlexDirection::Column, row_gap: px(8), max_width: px(620), ..default() }).with_children(|col| {
+            for (t, c) in [
+                ("Gué-Rouge. Une ville de passage, au bord d'une rivière couleur de rouille.", pal::INK),
+                ("Vous y arrivez à pied, en haillons, sans un sou. Personne ne vous attend.", pal::INK),
+                ("Ici, on n'est rien tant qu'on n'a rien fait. Les corvées paient mal. Les rats des Marches mordent fort. Les compagnies ne regardent même pas les gens comme vous.", pal::INK),
+                ("Pas encore.", pal::GOLD),
+                ("Il n'y a pas de classe à choisir : ce que vous portez décide de ce que vous savez faire. Chaque arme, chaque armure, chaque métier a sa Voie, et on progresse en pratiquant.", pal::DIM),
+                ("Commencez par le tableau des corvées. Achetez une arme. Puis passez la porte.", pal::DIM),
+            ] {
+                col.spawn(ui::label(fonts, t, 14.0, c));
+            }
         });
     });
 }

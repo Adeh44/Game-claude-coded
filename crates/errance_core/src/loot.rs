@@ -119,3 +119,8 @@ mod tests {
         assert!(item_value(&b) > item_value(&a) * 10);
     }
 }
+
+/// Prix d'achat au marché (les marchands se servent bien).
+pub fn buy_price(item: &Item) -> u32 {
+    (item_value(item) as f32 * 2.5).round().max(3.0) as u32
+}

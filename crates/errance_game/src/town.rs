@@ -230,7 +230,11 @@ fn refresh_town_ui(game: Res<Game>, mut info: Query<&mut Text, (With<TownInfo>, 
     }
 }
 
-fn town_actions(mut queue: ResMut<UiQueue>, mut overlay: ResMut<Overlay>) {
+fn town_actions(mut queue: ResMut<UiQueue>, mut overlay: ResMut<Overlay>, mut game: ResMut<Game>) {
+    if !game.0.has_flag("intro") && std::env::var("ERRANCE_DEMO").is_err() {
+        game.0.set_flag("intro");
+        overlay.0 = Some(Panel::Intro);
+    }
     let mut keep = vec![];
     for a in queue.take() {
         match a {

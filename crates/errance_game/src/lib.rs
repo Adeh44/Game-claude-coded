@@ -45,6 +45,7 @@ pub enum Panel {
     Gate,
     Inn,
     Company(u32),
+    Intro,
 }
 
 #[derive(Resource, Default)]

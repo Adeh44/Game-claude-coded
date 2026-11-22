@@ -65,6 +65,7 @@ pub enum Material {
     Cloth,
     Jewel,
     Alchemy,
+    Food,
 }
 
 impl Material {
@@ -121,6 +122,16 @@ impl Material {
                 "de saphir",
                 "de rubis",
                 "d'étoile",
+            ],
+            Material::Food => [
+                "rassis",
+                "frais",
+                "du boulanger",
+                "de fête",
+                "de banquet",
+                "royal",
+                "impérial",
+                "des dieux",
             ],
             Material::Alchemy => [
                 "diluée",
@@ -189,6 +200,16 @@ impl Material {
                 (0.2, 0.35, 0.9),
                 (0.85, 0.1, 0.2),
                 (1.0, 1.0, 0.8),
+            ],
+            Material::Food => [
+                (0.7, 0.55, 0.35),
+                (0.75, 0.6, 0.38),
+                (0.8, 0.62, 0.35),
+                (0.8, 0.5, 0.3),
+                (0.75, 0.4, 0.25),
+                (0.85, 0.7, 0.3),
+                (0.9, 0.75, 0.35),
+                (1.0, 0.9, 0.5),
             ],
             Material::Alchemy => [
                 (0.6, 0.3, 0.3),
