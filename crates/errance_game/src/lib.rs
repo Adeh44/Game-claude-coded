@@ -227,6 +227,7 @@ fn demo_driver(
     mut overlay: ResMut<Overlay>,
     field: Option<ResMut<field::Field>>,
     mut stick: ResMut<hud::Stick>,
+    mut queue: ResMut<UiQueue>,
 ) {
     let Ok(demo) = std::env::var("ERRANCE_DEMO") else { return };
     *frame += 1;
@@ -276,7 +277,7 @@ fn demo_driver(
                 Some("gate") => overlay.0 = Some(Panel::Gate),
                 Some("chores") => overlay.0 = Some(Panel::Chores),
                 Some("market") => overlay.0 = Some(Panel::Market),
-                Some("chore") => overlay.0 = Some(Panel::Chore(parts.get(1).copied().unwrap_or("caisses_du_port").to_string())),
+                Some("chore") => queue.0.push(UiAction::StartChore(parts.get(1).copied().unwrap_or("caisses_du_port").to_string())),
                 _ => {}
             }
         }

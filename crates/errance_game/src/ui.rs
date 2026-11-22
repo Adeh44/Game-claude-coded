@@ -37,7 +37,7 @@ pub mod pal {
     pub const RED: Color = Color::srgb(0.9, 0.25, 0.22);
     pub const GREEN: Color = Color::srgb(0.4, 0.85, 0.4);
     pub const BLUE: Color = Color::srgb(0.35, 0.6, 1.0);
-    pub const PANEL: Color = Color::srgba(0.09, 0.075, 0.06, 0.94);
+    pub const PANEL: Color = Color::srgba(0.09, 0.075, 0.06, 0.985);
     pub const PANEL_LIGHT: Color = Color::srgba(0.17, 0.14, 0.11, 0.95);
     pub const BUTTON: Color = Color::srgba(0.26, 0.2, 0.14, 0.95);
     pub const BUTTON_ON: Color = Color::srgba(0.5, 0.38, 0.2, 0.98);
@@ -110,7 +110,8 @@ impl Plugin for UiPlugin {
         app.init_resource::<Fonts>()
             .init_resource::<UiQueue>()
             .add_observer(on_activate)
-            .add_systems(Update, (button_feedback, ui_scale));
+            .add_observer(on_scroll)
+            .add_systems(Update, (button_feedback, ui_scale, send_scroll_events));
     }
 }
 
@@ -218,4 +219,57 @@ pub fn col() -> Node {
 
 pub fn rgb(c: (f32, f32, f32)) -> Color {
     Color::srgb(c.0, c.1, c.2)
+}
+
+/// Défilement : molette (PC) ou glisser du doigt (téléphone).
+#[derive(EntityEvent, Debug)]
+#[entity_event(propagate, auto_propagate)]
+struct Scroll {
+    entity: Entity,
+    delta: Vec2,
+}
+
+fn send_scroll_events(
+    mut wheel: MessageReader<bevy::input::mouse::MouseWheel>,
+    touches: Res<bevy::input::touch::Touches>,
+    hover_map: Res<bevy::picking::hover::HoverMap>,
+    scale: Res<UiScale>,
+    mut commands: Commands,
+) {
+    use bevy::picking::pointer::PointerId;
+    for w in wheel.read() {
+        let mut delta = -Vec2::new(w.x, w.y);
+        if w.unit == bevy::input::mouse::MouseScrollUnit::Line {
+            delta *= 28.0;
+        }
+        if let Some(map) = hover_map.get(&PointerId::Mouse) {
+            for entity in map.keys().copied() {
+                commands.trigger(Scroll { entity, delta });
+            }
+        }
+    }
+    for t in touches.iter() {
+        let d = t.delta();
+        if d.y.abs() < 0.5 {
+            continue;
+        }
+        if let Some(map) = hover_map.get(&PointerId::Touch(t.id())) {
+            for entity in map.keys().copied() {
+                commands.trigger(Scroll { entity, delta: Vec2::new(0.0, -d.y / scale.0) });
+            }
+        }
+    }
+}
+
+fn on_scroll(mut scroll: On<Scroll>, mut query: Query<(&mut ScrollPosition, &Node, &ComputedNode)>) {
+    let Ok((mut pos, node, computed)) = query.get_mut(scroll.entity) else { return };
+    let max = (computed.content_size() - computed.size()) * computed.inverse_scale_factor();
+    let delta = &mut scroll.delta;
+    if node.overflow.y == OverflowAxis::Scroll && delta.y != 0.0 {
+        let at_end = if delta.y > 0.0 { pos.y >= max.y } else { pos.y <= 0.0 };
+        if !at_end {
+            pos.y = (pos.y + delta.y).clamp(0.0, max.y.max(0.0));
+            delta.y = 0.0;
+        }
+    }
 }

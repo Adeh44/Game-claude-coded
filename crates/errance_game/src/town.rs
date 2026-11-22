@@ -11,7 +11,7 @@ pub struct TownPlugin;
 impl Plugin for TownPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Town), (build_town_scene, build_town_ui))
-            .add_systems(Update, (town_actions, orbit_camera, refresh_town_ui).run_if(in_state(AppState::Town)));
+            .add_systems(Update, (town_actions, orbit_camera, refresh_town_ui, hide_under_overlay).run_if(in_state(AppState::Town)));
     }
 }
 
@@ -182,6 +182,7 @@ fn build_town_ui(mut commands: Commands, fonts: Res<Fonts>, game: Res<Game>) {
         },
         BackgroundColor(Color::srgba(0.08, 0.06, 0.05, 0.8)),
         GlobalZIndex(5),
+        TownUi,
         DespawnOnExit(AppState::Town),
         children![(Text::new(hint(p)), ui::font(&fonts.regular, 12.0), TextColor(pal::INK), TownHint)],
     ));
@@ -246,4 +247,13 @@ fn town_actions(mut queue: ResMut<UiQueue>, mut overlay: ResMut<Overlay>) {
         }
     }
     queue.0.extend(keep);
+}
+
+fn hide_under_overlay(ov: Res<Overlay>, mut q: Query<&mut Visibility, With<TownUi>>) {
+    if !ov.is_changed() {
+        return;
+    }
+    for mut v in q.iter_mut() {
+        *v = if ov.0.is_some() { Visibility::Hidden } else { Visibility::Inherited };
+    }
 }
