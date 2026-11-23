@@ -1,6 +1,6 @@
 # Référence — Errance
 
-Mis à jour : 23/11/2026 (chantier Quête écrite : Gérald le Borgne).
+Mis à jour : 23/11/2026 (chantier Givrecol : passages d'escalade).
 
 ## Le jeu en une phrase
 RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » : on arrive en haillons à Gué-Rouge, on fait des corvées, on survit aux rats, on porte la torche pour des compagnies… puis on devient très fort dans la Voie qu'on a pratiquée.
@@ -16,7 +16,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 ## Architecture (workspace Cargo)
 | Crate | Rôle |
 |---|---|
-| `crates/errance_core` | Toutes les règles, zéro Bevy. Testé (53 tests). |
+| `crates/errance_core` | Toutes les règles, zéro Bevy. Testé (56 tests). |
 | `crates/errance_core/content/*.ron` | Contenu (voies, skills, talents, objets, affixes, uniques, ennemis, zones, corvées, noms). Embarqué via `include_str!`. |
 | `crates/errance_game` | Bevy 0.20 : rendu 3D low-poly procédural, HUD tactile, menus, mini-jeux. Lib `cdylib` pour Android + bin `errance` pour PC. |
 | `crates/errance_sim` | Simulateur d'équilibrage (milliers de combats). |
@@ -35,6 +35,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - `profile` : sauvegarde (RON), sac 40 places.
 - `expedition` : plan de zone (packs, décor, boss, nœuds de récolte) et mise en place du combat.
 - `quest` : quêtes écrites (offre, étapes = missions aux monstres fixés, embuscade, récompense), `MissionRun` suit l'objectif sur le terrain.
+- `climb` : escalade (voie = prises générées, `Climb::tick` : bras, chaleur, pitons, chutes ; `bot_step` = robot grimpeur du simulateur et des démos).
 - `craft` : récolte (nœuds, jauge `Gathering::tick`, carcasses de bêtes) et atelier (recettes calculées, qualité selon la Forge).
 
 ### Jeu (Bevy)
@@ -42,12 +43,13 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - `hud.rs` : joystick flottant (moitié gauche), 7 boutons de skills (déclenchés à l'appui), barres, cible, ordres aux compagnons, zoom pincé.
 - `models.rs` : modèles low-poly assemblés (humains par pièces d'équipement, rat, loup, sanglier, ours, araignée, squelette, troll, crapaud, arbres, rochers) + animation procédurale.
 - `gather.rs` : nœuds de récolte en 3D (arbre entaillé, filon brillant, touffe de plantes, carcasse) + repère flottant + jauge au-dessus des skills.
+- `climb.rs` : barre rocheuse 3D, bouton Grimper / Rappel, panneau de la paroi (prises à toucher, jauges, pitons).
 - `workshop.rs` : panneau Atelier du forgeron (réserve, recettes par tier, détail + Forger, vente des ressources).
 - `town.rs` : diorama de Gué-Rouge + menu ville. `menus.rs` : tous les panneaux. `minigames.rs` : 4 corvées. `save.rs` : sauvegarde auto (20 s + mise en arrière-plan).
 - Interface dessinée pour 420 px de haut puis mise à l'échelle (`UiScale`).
 
 ## Contenu actuel (compté par le test)
-25 voies · 71 talents · 8 zones (T1 → T8) · 4 ressources (bois, minerai, peau, fibre) · 1 quête écrite. Le reste : voir la sortie de `cargo test -p errance_core contenu -- --nocapture`.
+26 voies · 74 talents · 8 zones (T1 → T8) · 4 ressources (bois, minerai, peau, fibre) · 1 quête écrite. Le reste : voir la sortie de `cargo test -p errance_core contenu -- --nocapture`.
 
 ## Récolte & artisanat (v0.8)
 - Nœuds par zone (`nodes:` dans `zones.ron`) : Tree → bois, Vein → minerai, Herb → fibre ; les bêtes (famille `bete`) laissent une carcasse → peau. Tier = celui de la zone (25 % un cran dessous, 7 % un cran dessus), 3 à 5 unités.
@@ -65,6 +67,17 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - « Gérald le Borgne » (donneuse : Mère Ortie, patronne du Pichet Fêlé), dispo après 1 expédition : 1) La route du sud (Vergues, T2, taille 24) : loups, un cogneur, puis embuscade de la Fouine (lieutenant, 260 PV) + archer + va-nu-pieds ; 2) Le vieux fortin (Collines, T3, taille 28) : 4 groupes + Gérald. Récompense : 150 po, L'Œil de Gérald (unique `quest_only`, Excellente, ne tombe plus au hasard), +50 réputation Gué-Rouge.
 - Gérald n'est plus le boss des Collines Sourdes (zone sans boss désormais).
 - Simulation (IA, solo) : Recrue T2 contre l'embuscade 38 %, Mage-tank T3 100 % ; Gérald + archer : T2 0 %, T3 83 %.
+
+## Escalade : Givrecol (v0.10)
+- Zone `givrecol` (T5) : `climbs:` dans `zones.ron`. Le plan (`Layout.cliff`) pose une barre de rochers infranchissable à y = -0,3 × demi-taille, la Bête de Givrecol au-dessus, le départ en dessous. Deux voies : Le Couloir des Chamois (T4, 13 m, 8 % de verglas, un relais à mi-hauteur) et La Directe du Givre (T5, 10 m, 30 % de verglas). Tracé tiré à chaque expédition (graine par voie).
+- Au pied (1,8 m) : bouton « Grimper » (refusé en plein combat). Au sommet : « Descendre en rappel ». Toute la cordée (compagnons) suit le héros. Le combat est en pause pendant l'ascension (panneau).
+- Paroi : toucher une prise cerclée d'or (portée 1,7 m ; au-delà de 1,25 m c'est un jeté, plus cher). Mouvement 0,45 s, coût 4 (jeté 9) de Bras.
+- Bras (100) par seconde : Bac +3 (on secoue), Réglette -7, Plat -10, Verglas -12 (28 % de lâcher en l'attrapant), Relais +22. Chaleur (100) : -(1,8 + 0,22 × tier)/s hors relais, +6/s au relais. Sous 35 : bras ×1,5 ; à 0 : ×2,2.
+- Piton : 1,4 s à planter, 2 + 1 par 20 niveaux d'Escalade. Chute = Bras à 0 ou glissade. Retenu par le dernier piton/relais : 2 × distance + 0,5 m, puis 3 s pendu à la corde (on récupère). 4 chutes = on vous redescend. Sans protection : au pied, 6,5 % des PV max par mètre. Chutes retenues : 2,5 %/m. Plafond 85 %, jamais mortel.
+- Tenue (tête, torse, pieds) : plaque +12 % d'usure et +10 % de glissade par pièce ; tissu +15 % de froid ; cuir -5 % d'usure et -12 % de froid. Escalade : usure / (1 + 1,5 %/niv.), glissade / (1 + 3 %/niv.), froid / (1 + 1 %/niv.).
+- Gloire d'Escalade : 6 × mètres × multiplicateur de tier (×1,5 au sommet, ×0,5 sinon). Talents : Poigne de grimpeur (3), Pied montagnard (12), Sang des cimes (25).
+- Simulateur (robot qui réfléchit 0,8 s par geste, suit le plus court chemin) : Couloir 95 % au sommet dès le niveau 0 (plaque 89 %) ; Directe 77 % (niv. 0, plaque 68 %) → 90 % (niv. 40). Les échecs viennent surtout du verglas avant le premier piton : le robot est meilleur qu'un humain pressé, l'équilibrage fin se fera au téléphone.
+- Démo : `ERRANCE_DEMO=field:givrecol:climb[:0|1]` (au pied, panneau ouvert), `autoclimb` (le robot grimpe).
 
 ## Décisions
 - Bevy (pur Rust, tout en code, Android officiel). Rejetés : Macroquad (trop bas niveau), Fyrox (mobile peu éprouvé), Godot+Rust (éditeur à clics).
@@ -84,4 +97,5 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - Les panneaux laissent voir un peu la 3D (transparence plus forte que prévu, origine non trouvée).
 - Pas de ville marchable (diorama + menu).
 - Les Collines Sourdes n'ont plus de boss depuis que Gérald est réservé à la quête.
+- Escalade : seul le héros grimpe vraiment (les compagnons sont téléportés avec lui). Pas encore de cordée où un compagnon assure.
 - La réputation `gue_rouge` est stockée mais ne sert encore à rien (prix, portes, PNJ ?).

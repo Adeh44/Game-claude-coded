@@ -58,4 +58,6 @@
      description: "Couper, miner, cueillir, dépecer. Chaque niveau : récolte 2 % plus rapide, 1 % de chances d'une unité en plus. Les tiers élevés demandent de l'expérience."),
     (id: "forge", name: "Forge", category: Job, color: (0.9, 0.5, 0.25),
      description: "Transformer la matière en équipement. Chaque niveau améliore la qualité de ce qui sort de l'atelier. Les tiers élevés demandent de l'expérience."),
+    (id: "escalade", name: "Escalade", category: Job, color: (0.6, 0.78, 0.9),
+     description: "Grimper les passages de paroi (Givrecol). Chaque niveau : bras plus endurants, moins de froid et de glissades ; un piton de plus tous les 20 niveaux."),
 ]

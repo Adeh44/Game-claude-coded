@@ -154,6 +154,20 @@ pub struct ZoneDef {
     /// Nœuds de récolte : (type, nombre). Vide = un mélange par défaut.
     #[serde(default)]
     pub nodes: Vec<(NodeKind, u32)>,
+    /// Passages d'escalade : une barre rocheuse coupe la zone, ces voies la franchissent.
+    #[serde(default)]
+    pub climbs: Vec<ClimbDef>,
+}
+
+/// Une voie d'escalade d'une zone (le tracé exact est tiré à chaque expédition).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ClimbDef {
+    pub name: String,
+    pub tier: u8,
+    /// Hauteur (m).
+    pub height: f32,
+    /// Part de prises verglacées.
+    pub ice: f32,
 }
 
 impl ZoneDef {

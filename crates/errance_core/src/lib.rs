@@ -6,6 +6,7 @@
 //! l'afficher et lui transmettre les gestes du joueur.
 
 pub mod character;
+pub mod climb;
 pub mod combat;
 pub mod content;
 pub mod craft;

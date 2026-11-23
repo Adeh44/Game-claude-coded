@@ -26,8 +26,76 @@ pub struct Layout {
     /// Nœuds de récolte (arbres marqués, filons, plantes).
     #[serde(default)]
     pub nodes: Vec<Node>,
+    /// Barre rocheuse à escalader (Givrecol).
+    #[serde(default)]
+    pub cliff: Option<Cliff>,
 }
 
+/// Une barre rocheuse qui coupe la zone d'est en ouest.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Cliff {
+    /// Ligne de la paroi (le sud est en +y).
+    pub y: f32,
+    /// Blocs : (position, échelle).
+    pub rocks: Vec<(Vec2, f32)>,
+    pub spots: Vec<ClimbSpot>,
+}
+
+/// Un passage d'escalade : on part du pied (sud), on arrive au sommet (nord).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ClimbSpot {
+    pub x: f32,
+    /// Index dans `ZoneDef::climbs`.
+    pub def: usize,
+    /// Graine du tracé de la voie.
+    pub seed: u64,
+}
+
+/// Rayon de collision d'un bloc de la barre.
+pub const CLIFF_ROCK: f32 = 0.75;
+/// Distance pour démarrer l'escalade / le rappel.
+pub const CLIMB_RANGE: f32 = 1.8;
+
+impl Cliff {
+    pub fn foot(&self, k: usize) -> Vec2 {
+        Vec2::new(self.spots[k].x, self.y + 1.7)
+    }
+    pub fn top(&self, k: usize) -> Vec2 {
+        Vec2::new(self.spots[k].x, self.y - 1.9)
+    }
+    /// Trop près de la barre pour y poser quelque chose.
+    pub fn blocks(&self, p: Vec2, margin: f32) -> bool {
+        (p.y - self.y).abs() < margin
+    }
+    /// Le pied de voie le plus proche, à portée.
+    pub fn foot_near(&self, p: Vec2) -> Option<usize> {
+        (0..self.spots.len()).find(|&k| self.foot(k).distance(p) <= CLIMB_RANGE)
+    }
+    pub fn top_near(&self, p: Vec2) -> Option<usize> {
+        (0..self.spots.len()).find(|&k| self.top(k).distance(p) <= CLIMB_RANGE)
+    }
+}
+
+fn make_cliff(z: &ZoneDef, half: f32, rng: &mut Rng) -> Option<Cliff> {
+    if z.climbs.is_empty() {
+        return None;
+    }
+    let y = -half * 0.3;
+    let mut rocks = vec![];
+    let mut x = -half - 3.0;
+    while x <= half + 3.0 {
+        rocks.push((Vec2::new(x, y + rng.range_f32(-0.25, 0.25)), rng.range_f32(1.5, 2.1)));
+        x += 1.0;
+    }
+    let n = z.climbs.len();
+    let spots = (0..n)
+        .map(|k| {
+            let x = if n == 1 { 0.0 } else { -half * 0.55 + k as f32 * (half * 1.1) / (n - 1) as f32 };
+            ClimbSpot { x: x + rng.range_f32(-2.0, 2.0), def: k, seed: rng.next_u64() }
+        })
+        .collect();
+    Some(Cliff { y, rocks, spots })
+}
 fn far_enough(p: Vec2, others: &[Vec2], d: f32) -> bool {
     others.iter().all(|o| o.distance(p) >= d)
 }
@@ -47,6 +115,14 @@ fn layout_inner(z: &ZoneDef, fixed: Option<&[Vec<(String, u32)>]>, rng: &mut Rng
     let start = Vec2::new(0.0, half - 4.0);
     let mut packs = vec![];
     let mut centers = vec![start];
+    let cliff = make_cliff(z, half, rng);
+    if let Some(cl) = &cliff {
+        for k in 0..cl.spots.len() {
+            centers.push(cl.foot(k));
+            centers.push(cl.top(k));
+        }
+    }
+    let off_cliff = |p: Vec2, m: f32| cliff.as_ref().is_none_or(|cl| !cl.blocks(p, m));
     let boss = z.boss.as_ref().map(|b| (Vec2::new(0.0, -half + 6.0), b.clone()));
     if let Some((p, _)) = &boss {
         centers.push(*p);
@@ -59,7 +135,7 @@ fn layout_inner(z: &ZoneDef, fixed: Option<&[Vec<(String, u32)>]>, rng: &mut Rng
         let p = Vec2::new(rng.range_f32(-half + 4.0, half - 4.0), rng.range_f32(-half + 4.0, half - 8.0));
         // Une mission doit tout placer : on desserre petit à petit.
         let spacing = if tries > 500 { 5.0 } else { 8.0 };
-        if p.distance(start) < 12.0 || !far_enough(p, &centers, spacing) {
+        if p.distance(start) < 12.0 || !far_enough(p, &centers, spacing) || !off_cliff(p, 4.0) {
             continue;
         }
         let group: &[(String, u32)] = match fixed {
@@ -92,7 +168,7 @@ fn layout_inner(z: &ZoneDef, fixed: Option<&[Vec<(String, u32)>]>, rng: &mut Rng
         while k < n && tries < n * 40 {
             tries += 1;
             let p = Vec2::new(rng.range_f32(-half + 2.0, half - 2.0), rng.range_f32(-half + 2.0, half - 2.0));
-            if !far_enough(p, &centers, 5.0) || !far_enough(p, &placed, 3.0) {
+            if !far_enough(p, &centers, 5.0) || !far_enough(p, &placed, 3.0) || !off_cliff(p, 2.5) {
                 continue;
             }
             placed.push(p);
@@ -123,7 +199,7 @@ fn layout_inner(z: &ZoneDef, fixed: Option<&[Vec<(String, u32)>]>, rng: &mut Rng
         while k < n && tries < n * 30 {
             tries += 1;
             let p = Vec2::new(rng.range_f32(-half, half), rng.range_f32(-half, half));
-            if !far_enough(p, &centers, 4.5) || !far_enough(p, &placed, 1.6) {
+            if !far_enough(p, &centers, 4.5) || !far_enough(p, &placed, 1.6) || !off_cliff(p, 2.0) {
                 continue;
             }
             let scale = rng.range_f32(0.8, 1.35);
@@ -149,13 +225,16 @@ fn layout_inner(z: &ZoneDef, fixed: Option<&[Vec<(String, u32)>]>, rng: &mut Rng
         }
         x += 3.2;
     }
-    Layout { half, decor, packs, boss, start, nodes }
+    Layout { half, decor, packs, boss, start, nodes, cliff }
 }
 
 /// Crée le combat de l'expédition. Renvoie le combat et l'id du héros.
 /// Si `party_leads` : le premier du groupe est le chef (mode porteur).
 pub fn setup_combat(c: &Content, layout: &Layout, hero: FighterSpec, party: Vec<FighterSpec>, seed: u64, party_leads: bool) -> (Combat, FighterId, Vec<FighterId>) {
     let mut obstacles: Vec<(Vec2, f32)> = layout.decor.iter().filter(|d| d.1 > 0.0).map(|d| (d.0, d.1)).collect();
+    if let Some(cl) = &layout.cliff {
+        obstacles.extend(cl.rocks.iter().map(|(p, _)| (*p, CLIFF_ROCK)));
+    }
     // Arbres et filons bloquent le passage ; les plantes non.
     for n in &layout.nodes {
         if matches!(n.kind, NodeKind::Tree | NodeKind::Vein) {
@@ -213,6 +292,20 @@ mod tests {
             for n in &l.nodes {
                 assert!(n.tier.abs_diff(z.tier) <= 1);
                 assert!(n.pos.x.abs() <= z.size && n.pos.y.abs() <= z.size);
+            }
+            // Givrecol : la barre coupe tout, le boss est au-dessus, le départ en dessous.
+            if let Some(cl) = &l.cliff {
+                assert_eq!(cl.spots.len(), z.climbs.len());
+                assert!(l.start.y > cl.y);
+                if let Some((b, _)) = &l.boss {
+                    assert!(b.y < cl.y);
+                }
+                for w in cl.rocks.windows(2) {
+                    assert!(w[0].0.distance(w[1].0) < 2.0 * CLIFF_ROCK, "trou dans la barre");
+                }
+                for (p, _) in &l.packs {
+                    assert!(!cl.blocks(*p, 3.9));
+                }
             }
         }
     }

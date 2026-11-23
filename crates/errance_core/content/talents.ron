@@ -38,6 +38,17 @@
      description: "Vous affûtez et rivetez chaque soir. +10 % d'armure, +5 % de puissance physique et magique.",
      effects: [Stat((stat: Armor, kind: Percent, value: 0.1)), Stat((stat: PhysicalPower, kind: Percent, value: 0.05)), Stat((stat: MagicPower, kind: Percent, value: 0.05))]),
 
+    // ================= ESCALADE =================
+    (id: "poigne_de_grimpeur", name: "Poigne de grimpeur", line: "escalade", mastery: 3,
+     description: "Des heures pendu au bout des doigts. +8 % de puissance physique, +10 énergie.",
+     effects: [Stat((stat: PhysicalPower, kind: Percent, value: 0.08)), Stat((stat: MaxEnergy, kind: Flat, value: 10.0))]),
+    (id: "pied_montagnard", name: "Pied montagnard", line: "escalade", mastery: 12,
+     description: "Vous ne trébuchez plus. +6 % de vitesse de déplacement, +5 % d'esquive.",
+     effects: [Stat((stat: MoveSpeed, kind: Percent, value: 0.06)), Stat((stat: DodgeChance, kind: Flat, value: 0.05))]),
+    (id: "sang_des_cimes", name: "Sang des cimes", line: "escalade", mastery: 25,
+     description: "Le froid ne vous mord plus. +20 résistance magique, +10 % de PV max.",
+     effects: [Stat((stat: MagicResist, kind: Flat, value: 20.0)), Stat((stat: MaxHp, kind: Percent, value: 0.1))]),
+
     // ================= MAINS NUES =================
     (id: "poings_de_fer", name: "Poings de fer", line: "poings", mastery: 3, needs_equipped: true,
      description: "+30 % de vitesse d'attaque à mains nues.",

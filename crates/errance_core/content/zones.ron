@@ -50,7 +50,7 @@
      pack_count: 6),
 
     (id: "givrecol", name: "Les Crêtes de Givrecol", tier: 5,
-     description: "La montagne. Neige jusqu'aux genoux, vent qui coupe, crevasses. Les guides refusent de passer le col.",
+     description: "La montagne. Neige jusqu'aux genoux, vent qui coupe, crevasses. Un ressaut rocheux ferme le passage : il faut grimper pour atteindre la Bête.",
      ground: (0.86, 0.88, 0.92), foliage: (0.3, 0.42, 0.35), rock: (0.55, 0.57, 0.62), trees: 0.5, tree_kind: "sapin",
      sky: (0.82, 0.86, 0.92),
      packs: [
@@ -60,7 +60,12 @@
         (enemies: [("loup_des_neiges", 1), ("chasseur_des_cimes", 1)], weight: 1.0),
      ],
      nodes: [(Tree, 3), (Vein, 7), (Herb, 2)],
-     pack_count: 6, boss: Some("bete_de_givrecol")),
+     pack_count: 6, boss: Some("bete_de_givrecol"),
+     // Le Ressaut : une barre de rochers coupe la zone. La Bête attend au-dessus.
+     climbs: [
+        (name: "Le Couloir des Chamois", tier: 4, height: 13.0, ice: 0.08),
+        (name: "La Directe du Givre", tier: 5, height: 10.0, ice: 0.3),
+     ]),
     (id: "ostral", name: "Les Ruines d'Ostral", tier: 6,
      description: "Une capitale morte. Ses chevaliers montent toujours la garde.",
      ground: (0.42, 0.4, 0.38), foliage: (0.35, 0.38, 0.3), rock: (0.5, 0.48, 0.45), trees: 0.35, tree_kind: "mort",

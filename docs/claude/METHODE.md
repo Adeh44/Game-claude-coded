@@ -40,4 +40,5 @@
 | `wayland-sys` : build script échoue, pas de `target/` au démarrage | Le script d'environnement n'a pas tourné | `apt-get install` des libs (liste dans PROCHAINE_SESSION) ; miroir en 504 → boucle de 5 essais en arrière-plan |
 | `quetes.ron: Expected option` | Champ `Option<f32>` écrit `size: 24.0` | En RON une option s'écrit `Some(24.0)` |
 | Simulateur : 100 % → 0 % en ajoutant un ennemi T1 | L'IA du héros se fait encercler à 3 | Normal : régler les groupes de quête au simulateur (`quête :` en bas de chaque build) |
+| Une action poussée par la démo (`queue.0.push`) n'arrive jamais | `UiQueue` est vidée en PostUpdate ; si la démo tourne après le système qui lit la file, l'action est perdue | `demo_driver` tourne en PreUpdate (corrigé le 23/11) |
 | Un talent sans effet | Stat `ItemPower` jamais lue par le moteur | Utiliser des stats réellement appliquées (Armor, PhysicalPower…) |

@@ -2,6 +2,7 @@
 //! règles vivent dans `errance_core`.
 
 pub mod audio;
+pub mod climb;
 pub mod field;
 pub mod gather;
 pub mod hud;
@@ -52,6 +53,8 @@ pub enum Panel {
     Workshop,
     /// Dialogue d'une quête écrite (offre ou étape en cours).
     Quest(String),
+    /// La paroi (escalade en expédition).
+    Climb,
 }
 
 #[derive(Resource, Default)]
@@ -92,10 +95,12 @@ pub fn main() {
         .init_state::<AppState>()
         .init_resource::<Overlay>()
         .init_resource::<Toasts>()
-        .add_plugins((audio::AudioPlugin, ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin, gather::GatherPlugin))
+        .add_plugins((audio::AudioPlugin, ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin, gather::GatherPlugin, climb::ClimbPlugin))
         .add_systems(Startup, (setup_lib, setup_ui_camera))
         .add_systems(OnEnter(AppState::Title), build_title)
-        .add_systems(Update, (title_actions.run_if(in_state(AppState::Title)), show_toasts, auto_screenshot, demo_driver, save::autosave))
+        .add_systems(Update, (title_actions.run_if(in_state(AppState::Title)), show_toasts, auto_screenshot, save::autosave))
+        // La démo agit avant tout le monde (la file d'actions est vidée en fin d'image).
+        .add_systems(PreUpdate, demo_driver)
         .run();
 }
 
@@ -375,6 +380,24 @@ fn demo_driver(
             let half = f.combat.arena.half_extent.y;
             if let Some(h) = f.combat.get_mut(hero) {
                 h.pos = errance_core::math::Vec2::new(0.0, -half + 15.0);
+            }
+        }
+        if let Some(i) = parts.iter().position(|x| *x == "climb" || *x == "autoclimb") {
+            // field:givrecol:climb[:<voie>] : le héros au pied d'une voie, puis on grimpe.
+            let k: usize = parts.get(i + 1).and_then(|s| s.parse().ok()).unwrap_or(0);
+            let foot = f.cliff.as_ref().filter(|c| k < c.spots.len()).map(|c| c.foot(k));
+            if *frame == 12 {
+                let hero = f.hero;
+                if let (Some(p), Some(h)) = (foot, f.combat.get_mut(hero)) {
+                    h.pos = p;
+                    h.idle_time = 10.0;
+                }
+            }
+            if *frame == 16 {
+                queue.0.push(UiAction::ClimbPrompt);
+            }
+            if parts.contains(&"done") && *frame >= 175 {
+                queue.0.push(UiAction::ClimbDone);
             }
         }
         if parts.contains(&"auto") {

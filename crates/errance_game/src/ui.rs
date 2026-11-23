@@ -103,6 +103,12 @@ pub enum UiAction {
     CraftSelect(String),
     Craft(String, u8),
     SellResource(usize),
+    // Escalade
+    ClimbPrompt,
+    ClimbHold(u32),
+    ClimbPiton,
+    ClimbGiveUp,
+    ClimbDone,
     // Quêtes
     OpenQuest(String),
     AcceptQuest(String),

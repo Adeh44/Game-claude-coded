@@ -63,6 +63,8 @@ pub struct Field {
     pub gather_hit: bool,
     /// Mission de quête en cours (embuscade, objectif).
     pub mission: Option<errance_core::quest::MissionRun>,
+    /// Barre rocheuse et voies d'escalade (Givrecol).
+    pub cliff: Option<errance_core::expedition::Cliff>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -393,6 +395,7 @@ pub fn setup_field(
         resources: vec![],
         gather_hit: false,
         mission: mission_run,
+        cliff: layout.cliff.clone(),
     });
 }
 

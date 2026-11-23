@@ -392,6 +392,7 @@ fn rebuild_panel(
     fonts: Res<Fonts>,
     game: Option<Res<Game>>,
     state: Res<State<AppState>>,
+    climb: Option<Res<crate::climb::ClimbRun>>,
 ) {
     if !ov.is_changed() && !menu.dirty {
         return;
@@ -419,6 +420,7 @@ fn rebuild_panel(
         Panel::Intro => "Gué-Rouge".into(),
         Panel::Workshop => "Atelier du forgeron".into(),
         Panel::Quest(id) => content().quest(id).map(|q| q.name.clone()).unwrap_or_default(),
+        Panel::Climb => "Passage d'escalade".into(),
     };
     let close_label = match panel {
         Panel::Summary => "Retour en ville",
@@ -431,7 +433,7 @@ fn rebuild_panel(
                 r.spawn(ui::title(&fonts, title, 18.0, pal::GOLD));
                 r.spawn(ui::row()).with_children(|rr| {
                     rr.spawn((Text::new(format!("{} po", game.0.gold)), ui::font(&fonts.bold, 13.0), TextColor(pal::GOLD), PanelGold));
-                    if panel != Panel::Chore(String::new()) {
+                    if !matches!(panel, Panel::Chore(_) | Panel::Climb) {
                         rr.spawn(ui::button(&fonts, close_label, UiAction::Close, px(if panel == Panel::Summary { 150.0 } else { 90.0 }), 12.0));
                     }
                 });
@@ -465,6 +467,7 @@ fn rebuild_panel(
         Panel::Intro => build_intro(&mut commands, body, &fonts),
         Panel::Workshop => crate::workshop::build_workshop(&mut commands, body, &fonts, p, &menu),
         Panel::Quest(id) => build_quest(&mut commands, body, &fonts, p, &id),
+        Panel::Climb => crate::climb::build_climb(&mut commands, body, &fonts, climb.as_deref()),
     }
 }
 

@@ -9,7 +9,7 @@ Rien n'est coupé : tout attend son tour.
 - Quêtes écrites suite : d'autres quêtes avec choix moraux (épargner Gérald qui supplie ? rendre le grain aux cochers ou le revendre ?), PNJ donneurs ailleurs qu'à la taverne, journal de quêtes dans la Fiche.
 - Un nouveau boss pour les Collines Sourdes (Gérald est réservé à la quête).
 - La réputation de Gué-Rouge (gagnée par la quête) : remises au marché, gardes plus aimables, accès à des quêtes de la ville.
-- Région des montagnes enneigées avec passages d'escalade (mini-jeu de prises, gestion du froid et de la corde).
+- Escalade suite : un compagnon qui assure (moins de dégâts), des cristaux / nids rares à mi-paroi, des voies dans d'autres zones (falaises de Vergues, ruines d'Ostral), une quête d'alpinisme (sauver un guide coincé au relais).
 - QG / camp de sa propre compagnie (améliorations, recrues débutantes qui portent TES torches).
 - Montures.
 - Marché dynamique (prix qui bougent selon l'offre des PNJ).

@@ -207,4 +207,37 @@ fn main() {
         }
         println!();
     }
+    escalade(n_fights);
+}
+
+/// Passages d'escalade de Givrecol : le robot grimpeur, selon la tenue et le niveau.
+fn escalade(n: u64) {
+    use errance_core::climb::{ClimbEnd, ClimbGear, generate_route, simulate};
+    use errance_core::rng::Rng;
+    let c = content();
+    let Some(z) = c.zone("givrecol") else { return };
+    println!("=== Escalade (robot grimpeur, {n} essais par ligne) ===");
+    let tenues: [(&str, (u32, u32, u32)); 4] = [("sans armure", (0, 0, 0)), ("tissu ×3", (3, 0, 0)), ("cuir ×3", (0, 3, 0)), ("plaque ×3", (0, 0, 3))];
+    for d in &z.climbs {
+        println!("-- {} (T{}, {:.0} m, verglas {:.0} %)", d.name, d.tier, d.height, d.ice * 100.0);
+        for lvl in [0, 15, 40] {
+            for (name, (t, l, p)) in &tenues {
+                let gear = ClimbGear::new(lvl, *t, *l, *p);
+                let (mut top, mut fell, mut dmg) = (0, 0, 0.0);
+                for s in 0..n {
+                    let mut rng = Rng::new(s * 31 + 7);
+                    let r = generate_route(&d.name, d.tier, d.height, d.ice, &mut rng);
+                    let (end, frac) = simulate(&r, gear, s * 7 + 1);
+                    match end {
+                        ClimbEnd::Top => top += 1,
+                        ClimbEnd::Fell { .. } => fell += 1,
+                        _ => {}
+                    }
+                    dmg += frac;
+                }
+                let pct = |x: u32| x as f32 / n as f32 * 100.0;
+                println!("   Escalade {lvl:>2}, {name:<11} sommet {:5.1} %   chute au sol {:4.1} %   PV perdus {:4.0} %", pct(top), pct(fell), dmg / n as f32 * 100.0);
+            }
+        }
+    }
 }
