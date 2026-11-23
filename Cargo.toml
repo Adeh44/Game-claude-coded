@@ -25,3 +25,8 @@ lto = "thin"
 codegen-units = 1
 strip = true
 opt-level = 3
+
+# Correctif local de wgpu-hal : ne plus planter quand le pilote Vulkan d'un
+# téléphone renvoie ERROR_FRAGMENTED_POOL (voir vendor/wgpu-hal/src/vulkan/descriptor.rs).
+[patch.crates-io]
+wgpu-hal = { path = "vendor/wgpu-hal" }

@@ -46,4 +46,5 @@
 | `quetes.ron: Expected option` | Champ `Option<f32>` écrit `size: 24.0` | En RON une option s'écrit `Some(24.0)` |
 | Simulateur : 100 % → 0 % en ajoutant un ennemi T1 | L'IA du héros se fait encercler à 3 | Normal : régler les groupes de quête au simulateur (`quête :` en bas de chaque build) |
 | Une action poussée par la démo (`queue.0.push`) n'arrive jamais | `UiQueue` est vidée en PostUpdate ; si la démo tourne après le système qui lit la file, l'action est perdue | `demo_driver` tourne en PreUpdate (corrigé le 23/11) |
+| Téléphone (Redmi, Android 16) : plantage quelques secondes après « Nouvelle partie », `entered unreachable code` dans `wgpu-hal/src/vulkan/descriptor.rs:208` | Le pilote Vulkan renvoie `ERROR_FRAGMENTED_POOL`, que wgpu-hal 30.0.2 croit impossible | Copie corrigée dans `vendor/wgpu-hal` (`[patch.crates-io]` du Cargo.toml racine) : réserve marquée pleine, nouvelle réserve, nouvel essai. À retirer quand wgpu corrigera (vérifier la version de wgpu-hal à chaque montée de Bevy) |
 | Un talent sans effet | Stat `ItemPower` jamais lue par le moteur | Utiliser des stats réellement appliquées (Armor, PhysicalPower…) |

@@ -20,6 +20,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 | `crates/errance_core/content/*.ron` | Contenu (voies, skills, talents, objets, affixes, uniques, ennemis, zones, corvées, noms). Embarqué via `include_str!`. |
 | `crates/errance_game` | Bevy 0.20 : rendu 3D low-poly procédural, HUD tactile, menus, mini-jeux. Lib `cdylib` pour Android + bin `errance` pour PC. |
 | `crates/errance_sim` | Simulateur d'équilibrage (milliers de combats). |
+| `vendor/wgpu-hal` | Copie patchée de wgpu-hal 30.0.2 (plantage Vulkan sur certains téléphones), branchée par `[patch.crates-io]`. |
 | `android/` | Projet Gradle (GameActivity), paysage verrouillé, icône vectorielle, clé debug fixe. |
 | `.github/workflows/ci.yml` | Tests + clippy + APK + release `apk-latest`. |
 
