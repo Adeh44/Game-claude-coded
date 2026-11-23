@@ -4,6 +4,7 @@
 use crate::character::enemy_spec;
 use crate::combat::{Arena, Combat, Controller, FighterId, FighterSpec, Team};
 use crate::content::{Content, ZoneDef};
+use crate::craft::{Node, NodeKind, roll_node_tier};
 use crate::math::Vec2;
 use crate::rng::Rng;
 use serde::{Deserialize, Serialize};
@@ -22,6 +23,9 @@ pub struct Layout {
     pub packs: Vec<(Vec2, Vec<String>)>,
     pub boss: Option<(Vec2, String)>,
     pub start: Vec2,
+    /// Nœuds de récolte (arbres marqués, filons, plantes).
+    #[serde(default)]
+    pub nodes: Vec<Node>,
 }
 
 fn far_enough(p: Vec2, others: &[Vec2], d: f32) -> bool {
@@ -62,6 +66,23 @@ pub fn layout_zone(z: &ZoneDef, rng: &mut Rng) -> Layout {
     let n_rocks = (area / 260.0) as usize;
     let mut decor = vec![];
     let mut placed: Vec<Vec2> = vec![];
+    // Nœuds de récolte d'abord : ils doivent trouver leur place.
+    let mut nodes = vec![];
+    for (kind, n) in z.node_counts() {
+        let mut k = 0;
+        let mut tries = 0;
+        while k < n && tries < n * 40 {
+            tries += 1;
+            let p = Vec2::new(rng.range_f32(-half + 2.0, half - 2.0), rng.range_f32(-half + 2.0, half - 2.0));
+            if !far_enough(p, &centers, 5.0) || !far_enough(p, &placed, 3.0) {
+                continue;
+            }
+            placed.push(p);
+            let tier = roll_node_tier(z.tier, rng);
+            nodes.push(Node { pos: p, kind, tier, left: rng.range_u32(3, 5) });
+            k += 1;
+        }
+    }
     let mut put = |kind: Decor, n: usize, rng: &mut Rng, decor: &mut Vec<(Vec2, f32, Decor, f32)>| {
         let mut k = 0;
         let mut tries = 0;
@@ -94,13 +115,19 @@ pub fn layout_zone(z: &ZoneDef, rng: &mut Rng) -> Layout {
         }
         x += 3.2;
     }
-    Layout { half, decor, packs, boss, start }
+    Layout { half, decor, packs, boss, start, nodes }
 }
 
 /// Crée le combat de l'expédition. Renvoie le combat et l'id du héros.
 /// Si `party_leads` : le premier du groupe est le chef (mode porteur).
 pub fn setup_combat(c: &Content, layout: &Layout, hero: FighterSpec, party: Vec<FighterSpec>, seed: u64, party_leads: bool) -> (Combat, FighterId, Vec<FighterId>) {
-    let obstacles = layout.decor.iter().filter(|d| d.1 > 0.0).map(|d| (d.0, d.1)).collect();
+    let mut obstacles: Vec<(Vec2, f32)> = layout.decor.iter().filter(|d| d.1 > 0.0).map(|d| (d.0, d.1)).collect();
+    // Arbres et filons bloquent le passage ; les plantes non.
+    for n in &layout.nodes {
+        if matches!(n.kind, NodeKind::Tree | NodeKind::Vein) {
+            obstacles.push((n.pos, 0.5));
+        }
+    }
     let mut combat = Combat::new(seed, Arena { half_extent: Vec2::new(layout.half, layout.half), obstacles });
     let hero_controlled = hero.controller == Controller::Player;
     let hid = combat.spawn(hero, layout.start);
@@ -146,6 +173,12 @@ mod tests {
             assert!(l.decor.len() > 10);
             for (p, _) in &l.packs {
                 assert!(p.distance(l.start) >= 12.0);
+            }
+            // Des ressources partout, au tier de la zone (à un cran près).
+            assert!(l.nodes.len() >= 8, "{} : {} nœuds", z.id, l.nodes.len());
+            for n in &l.nodes {
+                assert!(n.tier.abs_diff(z.tier) <= 1);
+                assert!(n.pos.x.abs() <= z.size && n.pos.y.abs() <= z.size);
             }
         }
     }

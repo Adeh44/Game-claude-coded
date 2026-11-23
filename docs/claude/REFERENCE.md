@@ -1,6 +1,6 @@
 # Référence — Errance
 
-Mis à jour : 22/11/2026 (nuit 1).
+Mis à jour : 23/11/2026 (chantier Récolte & artisanat).
 
 ## Le jeu en une phrase
 RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » : on arrive en haillons à Gué-Rouge, on fait des corvées, on survit aux rats, on porte la torche pour des compagnies… puis on devient très fort dans la Voie qu'on a pratiquée.
@@ -33,17 +33,28 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - `item`/`loot` : bases × tier (T8 ≈ 7× T1) × qualité (5) × affixes ; uniques ; prix.
 - `world` : aventuriers, compagnies, rangs, traits, jours qui passent.
 - `profile` : sauvegarde (RON), sac 40 places.
-- `expedition` : plan de zone (packs, décor, boss) et mise en place du combat.
+- `expedition` : plan de zone (packs, décor, boss, nœuds de récolte) et mise en place du combat.
+- `craft` : récolte (nœuds, jauge `Gathering::tick`, carcasses de bêtes) et atelier (recettes calculées, qualité selon la Forge).
 
 ### Jeu (Bevy)
 - `field.rs` : expédition 3D (sol, décor, combattants, VFX, butin, fin, mode porteur).
 - `hud.rs` : joystick flottant (moitié gauche), 7 boutons de skills (déclenchés à l'appui), barres, cible, ordres aux compagnons, zoom pincé.
 - `models.rs` : modèles low-poly assemblés (humains par pièces d'équipement, rat, loup, sanglier, ours, araignée, squelette, troll, crapaud, arbres, rochers) + animation procédurale.
+- `gather.rs` : nœuds de récolte en 3D (arbre entaillé, filon brillant, touffe de plantes, carcasse) + repère flottant + jauge au-dessus des skills.
+- `workshop.rs` : panneau Atelier du forgeron (réserve, recettes par tier, détail + Forger, vente des ressources).
 - `town.rs` : diorama de Gué-Rouge + menu ville. `menus.rs` : tous les panneaux. `minigames.rs` : 4 corvées. `save.rs` : sauvegarde auto (20 s + mise en arrière-plan).
 - Interface dessinée pour 420 px de haut puis mise à l'échelle (`UiScale`).
 
 ## Contenu actuel (compté par le test)
-23 voies · 153 skills · 65 talents · 63 objets de base · 22 affixes · 6 uniques · 14 ennemis (T1 → T4) · 4 zones · 6 corvées.
+25 voies · 71 talents · 8 zones (T1 → T8) · 4 ressources (bois, minerai, peau, fibre). Le reste : voir la sortie de `cargo test -p errance_core contenu -- --nocapture`.
+
+## Récolte & artisanat (v0.8)
+- Nœuds par zone (`nodes:` dans `zones.ron`) : Tree → bois, Vein → minerai, Herb → fibre ; les bêtes (famille `bete`) laissent une carcasse → peau. Tier = celui de la zone (25 % un cran dessous, 7 % un cran dessus), 3 à 5 unités.
+- Rester à moins de 1,9 m : la jauge monte (1,3 s × (1 + 0,2 × (tier-1)) / (1 + 2 % × niveau)). Un coup reçu la remet à zéro. Récolte niv. requis = même échelle que l'équipement (T2:4, T3:12…).
+- Gloire de Récolte : 5 × multiplicateur de tier par unité. Rendement : +1 % de chances d'une unité bonus par niveau.
+- Ressources : réserve à part (`Profile.resources`), pas de place au sac. Perdues si on tombe, gardées en mode porteur.
+- Atelier : recette calculée, pas écrite : ressource principale du matériau (Métal → minerai, Bois → bois, Cuir → peau, Tissu → fibre) × 12 (arme 2 mains) / 8 (arme, torse) / 6 (main secondaire) / 4 (tête, pieds, cape), + un quart en ressource d'appoint, + 1/3 de la valeur en po. Forge niv. requis = échelle des tiers. Qualité : chance +4 %/niveau de Forge. Gloire de Forge : 4 × unités × multiplicateur de tier.
+- Talents : Récolte (Bras de bûcheron, Pas du cueilleur, Coureur des bois), Forge (Bras de forgeron, Habitué des braises, Entretien).
 
 ## Décisions
 - Bevy (pur Rust, tout en code, Android officiel). Rejetés : Macroquad (trop bas niveau), Fyrox (mobile peu éprouvé), Godot+Rust (éditeur à clics).
@@ -57,8 +68,8 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - Points de talent à répartir (contraire à « tout l'Atlas est complétable »).
 
 ## Dettes ouvertes
-- APK jamais construit : le push GitHub est bloqué (403, app Claude non installée sur le dépôt). La CI est prête mais n'a jamais tourné.
 - Aucun son.
-- Zones et ennemis seulement jusqu'au tier 4 (objets jusqu'au T8).
+- La stat `ItemPower` existe mais n'est lue nulle part (ne pas l'utiliser dans un talent tant que ce n'est pas branché).
+- Bijoux, potions, repas : pas encore fabricables (alchimie, cuisine, joaillerie à venir).
 - Les panneaux laissent voir un peu la 3D (transparence plus forte que prévu, origine non trouvée).
 - Pas de ville marchable (diorama + menu).

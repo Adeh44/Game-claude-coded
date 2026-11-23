@@ -98,6 +98,11 @@ pub enum UiAction {
     ToggleMusic,
     ToggleSfx,
     FoundCompany,
+    // Atelier
+    CraftTier(u8),
+    CraftSelect(String),
+    Craft(String, u8),
+    SellResource(usize),
     /// Rien (bouton décoratif / désactivé).
     None,
 }

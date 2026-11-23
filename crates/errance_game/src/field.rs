@@ -52,6 +52,13 @@ pub struct Field {
     /// Mode porteur : id de la compagnie.
     pub porter_for: Option<u32>,
     pub porter_timer: f32,
+    /// Récolte : nœuds, leurs modèles, la jauge en cours, ce qu'on a ramassé.
+    pub nodes: Vec<errance_core::craft::Node>,
+    pub node_views: Vec<crate::gather::NodeView>,
+    pub gathering: errance_core::craft::Gathering,
+    pub resources: Vec<errance_core::craft::ResourceStack>,
+    /// Le héros a pris un coup cette image (interrompt la récolte).
+    pub gather_hit: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -262,12 +269,18 @@ pub fn setup_field(
     }
     // Décor.
     for (pos, _, kind, scale) in &layout.decor {
-        let rot = rng.range_f32(0.0, 6.28);
+        let rot = rng.range_f32(0.0, std::f32::consts::TAU);
         let e = match kind {
             Decor::Tree => spawn_tree(&mut painter, &mut commands, v3(*pos, 0.0), &zone.tree_kind, zone.foliage, *scale, rot),
             Decor::Rock => spawn_rock(&mut painter, &mut commands, v3(*pos, 0.0), zone.rock, Vec3::new(1.1, 0.8, 1.0) * *scale, rot),
         };
         commands.entity(e).insert(scope.clone());
+    }
+    // Nœuds de récolte.
+    let mut node_views = vec![];
+    for n in &layout.nodes {
+        let rot = rng.range_f32(0.0, std::f32::consts::TAU);
+        node_views.push(crate::gather::spawn_node(&mut painter, &mut commands, n, zone.foliage, zone.rock, &zone.tree_kind, rot));
     }
     // Sortie (poteau + feu de camp) au point de départ.
     let exit = layout.start + V2::new(2.5, 1.5);
@@ -356,6 +369,11 @@ pub fn setup_field(
         used_potion: false,
         porter_for: exp.porter_for,
         porter_timer: 0.0,
+        nodes: layout.nodes.clone(),
+        node_views,
+        gathering: Default::default(),
+        resources: vec![],
+        gather_hit: false,
     });
 }
 
@@ -487,7 +505,7 @@ fn field_input(
 }
 
 /// Fait avancer le combat, applique la gloire et le butin.
-fn step_combat(
+pub fn step_combat(
     mut commands: Commands,
     time: Res<Time>,
     mut field: ResMut<Field>,
@@ -514,6 +532,9 @@ fn step_combat(
     for ev in events {
         match ev {
             CEvent::Damage { dst, amount, kind, crit, src, .. } => {
+                if dst == hero && amount >= 1.0 {
+                    field.gather_hit = true;
+                }
                 if let Some(f) = field.combat.get(dst) {
                     let color = if f.team == Team::Ally {
                         Color::srgb(1.0, 0.35, 0.3)
@@ -652,6 +673,10 @@ fn step_combat(
                         if gold > 0 || !items.is_empty() {
                             let entity = spawn_loot_bag(&mut commands, &mut painter, v3(pos, 0.0), !items.is_empty());
                             field.ground.push(GroundLoot { pos, gold, items, entity });
+                        }
+                        // Une bête abattue se dépèce (à côté du butin, pas dessus).
+                        if let Some(n) = errance_core::craft::carcass_of(e, pos + V2::new(0.9, 0.0)) {
+                            crate::gather::add_carcass(&mut field, &mut painter, &mut commands, n);
                         }
                         if e.boss {
                             toasts.push(format!("{name} est vaincu !"));
@@ -1040,8 +1065,12 @@ pub fn finish_expedition(game: &mut Game, field: &mut Field) -> Vec<String> {
                 p.gold -= lost;
                 lines.push(format!("Le guérisseur a pris {lost} po."));
             }
+            if !field.resources.is_empty() {
+                lines.push("Les ressources récoltées sont restées dans la boue.".into());
+            }
             field.loot.clear();
             field.gold = 0;
+            field.resources.clear();
         }
         _ if field.porter_for.is_some() => {
             let cid = field.porter_for.unwrap();
@@ -1098,6 +1127,18 @@ pub fn finish_expedition(game: &mut Game, field: &mut Field) -> Vec<String> {
                 }
             }
             field.gold = 0;
+        }
+    }
+    // Ce qu'on a récolté soi-même, on le garde (même porteur).
+    let gathered: Vec<_> = field.resources.drain(..).collect();
+    if !gathered.is_empty() {
+        let list: Vec<String> = gathered
+            .iter()
+            .map(|r| format!("{} {}", r.count, c.resource(&r.id).map(|d| d.tier_name(r.tier).to_string()).unwrap_or(r.id.clone())))
+            .collect();
+        lines.push(format!("Récolte : {}.", list.join(", ")));
+        for r in gathered {
+            errance_core::craft::stack_add(&mut p.resources, &r.id, r.tier, r.count);
         }
     }
     // Les mercenaires ont fini leur contrat.

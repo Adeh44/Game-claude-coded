@@ -8,6 +8,7 @@
 pub mod character;
 pub mod combat;
 pub mod content;
+pub mod craft;
 pub mod expedition;
 pub mod item;
 pub mod look;

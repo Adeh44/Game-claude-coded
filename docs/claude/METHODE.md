@@ -37,3 +37,5 @@
 | Le jeu panique sous Xvfb : `libxkbcommon-x11.so` | Lib manquante dans le conteneur | `apt-get install libxkbcommon-x11-0` |
 | `cargo check --target aarch64-linux-android` échoue (blake3, android-activity) | Pas de NDK ici (dl.google.com bloqué) | Vérif possible avec le backend `android-native-activity` + `CC_aarch64_linux_android=clang` + `CFLAGS_aarch64_linux_android="--target=aarch64-linux-gnu -isystem /usr/aarch64-linux-gnu/include"` (paquet `libc6-dev-arm64-cross`). Ne pas commiter le changement de backend. |
 | Bouton qui n'agit pas sur le skill | Les boutons de skill doivent réagir à l'appui | `ActivateOnPress` (`ui::instant()`) |
+| `wayland-sys` : build script échoue, pas de `target/` au démarrage | Le script d'environnement n'a pas tourné | `apt-get install` des libs (liste dans PROCHAINE_SESSION) ; miroir en 504 → boucle de 5 essais en arrière-plan |
+| Un talent sans effet | Stat `ItemPower` jamais lue par le moteur | Utiliser des stats réellement appliquées (Armor, PhysicalPower…) |

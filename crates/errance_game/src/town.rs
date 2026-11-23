@@ -156,6 +156,7 @@ fn build_town_ui(mut commands: Commands, fonts: Res<Fonts>, game: Res<Game>) {
             for (label, b) in [
                 ("Tableau des corvées", "corvees"),
                 ("Marché", "marche"),
+                ("Atelier du forgeron", "atelier"),
                 ("Taverne du Pichet Fêlé", "taverne"),
                 ("Porte de la ville", "porte"),
                 ("Auberge (repos)", "auberge"),
@@ -244,6 +245,7 @@ fn town_actions(mut queue: ResMut<UiQueue>, mut overlay: ResMut<Overlay>, mut ga
                     "marche" => Panel::Market,
                     "taverne" => Panel::Tavern,
                     "porte" => Panel::Gate,
+                    "atelier" => Panel::Workshop,
                     _ => Panel::Inn,
                 });
             }

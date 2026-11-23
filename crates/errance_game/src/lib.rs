@@ -3,6 +3,7 @@
 
 pub mod audio;
 pub mod field;
+pub mod gather;
 pub mod hud;
 pub mod menus;
 pub mod minigames;
@@ -10,6 +11,7 @@ pub mod models;
 pub mod save;
 pub mod town;
 pub mod ui;
+pub mod workshop;
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Screenshot, save_to_disk};
@@ -47,6 +49,7 @@ pub enum Panel {
     Inn,
     Company(u32),
     Intro,
+    Workshop,
 }
 
 #[derive(Resource, Default)]
@@ -87,7 +90,7 @@ pub fn main() {
         .init_state::<AppState>()
         .init_resource::<Overlay>()
         .init_resource::<Toasts>()
-        .add_plugins((audio::AudioPlugin, ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin))
+        .add_plugins((audio::AudioPlugin, ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin, gather::GatherPlugin))
         .add_systems(Startup, (setup_lib, setup_ui_camera))
         .add_systems(OnEnter(AppState::Title), build_title)
         .add_systems(Update, (title_actions.run_if(in_state(AppState::Title)), show_toasts, auto_screenshot, demo_driver, save::autosave))
@@ -252,6 +255,13 @@ fn demo_driver(
             }
             p.gold = 137;
         }
+        if parts.contains(&"res") {
+            // De quoi forger quelques objets.
+            for (r, t, n) in [("minerai", 1, 14), ("bois", 1, 9), ("peau", 1, 5), ("fibre", 2, 3), ("minerai", 2, 4)] {
+                errance_core::craft::stack_add(&mut p.resources, r, t, n);
+            }
+            p.gold = p.gold.max(60);
+        }
         if parts.contains(&"party") || parts.contains(&"companion") {
             let ids: Vec<u32> = p.world.tavern().iter().take(2).map(|n| n.id).collect();
             for id in &ids {
@@ -283,6 +293,7 @@ fn demo_driver(
                 Some("gate") => overlay.0 = Some(Panel::Gate),
                 Some("chores") => overlay.0 = Some(Panel::Chores),
                 Some("market") => overlay.0 = Some(Panel::Market),
+                Some("workshop") => overlay.0 = Some(Panel::Workshop),
                 Some("company") => {
                     if let Some(co) = g.0.world.companies.first() {
                         queue.0.push(UiAction::OpenCompany(co.id));

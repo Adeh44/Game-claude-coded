@@ -19,6 +19,10 @@ pub struct Counters {
     pub chores: u32,
     pub expeditions: u32,
     pub gold_earned: u64,
+    #[serde(default)]
+    pub gathered: u32,
+    #[serde(default)]
+    pub crafted: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -43,6 +47,9 @@ pub struct Profile {
     /// Votre propre compagnie, une fois fondée.
     #[serde(default)]
     pub own_company: Option<String>,
+    /// Ressources récoltées (réserve de l'atelier, ne prend pas de place au sac).
+    #[serde(default)]
+    pub resources: Vec<crate::craft::ResourceStack>,
 }
 
 impl Profile {
@@ -62,6 +69,7 @@ impl Profile {
             reputation: BTreeMap::new(),
             world: crate::world::World::default(),
             own_company: None,
+            resources: vec![],
         };
         let rags = p.new_item("haillons", 1);
         let _ = hero.equip(c, rags);
@@ -209,6 +217,17 @@ impl Profile {
             return Err("Fonder une compagnie coûte 200 po (charte, bannière, tonneau de bière).".into());
         }
         Ok(())
+    }
+
+    /// Vend toute une pile de ressources. Renvoie le gain.
+    pub fn sell_resource(&mut self, idx: usize) -> Option<u32> {
+        if idx >= self.resources.len() {
+            return None;
+        }
+        let s = self.resources.remove(idx);
+        let v = crate::craft::resource_unit_value(s.tier) * s.count;
+        self.earn(v);
+        Some(v)
     }
 
     pub fn to_ron(&self) -> String {

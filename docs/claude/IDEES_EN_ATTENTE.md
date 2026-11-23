@@ -2,7 +2,10 @@
 
 Rien n'est coupé : tout attend son tour.
 
-- Récolte (bois, minerai, peaux) et artisanat (forge, couture, alchimie, cuisine) avec leurs propres maîtrises.
+- Artisanat suite : alchimie (potions), cuisine (repas), joaillerie (bijoux) avec leurs ressources (herbes rares, gibier, gemmes).
+- Outils de récolte (hache, pioche, couteau) avec leur tier, comme dans Albion.
+- Raffinage (minerai → lingots) entre récolte et forge.
+- Animation du héros qui frappe pendant la récolte.
 - Quêtes écrites (personnages marquants, choix moraux).
 - Région des montagnes enneigées avec passages d'escalade (mini-jeu de prises, gestion du froid et de la corde).
 - QG / camp de sa propre compagnie (améliorations, recrues débutantes qui portent TES torches).

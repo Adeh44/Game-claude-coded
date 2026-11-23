@@ -16,6 +16,28 @@
      description: "Sous 30 % de PV : +40 % d'armure et de résistance.",
      effects: [StatWhile(cond: HpBelow(0.3), modifier: (stat: Armor, kind: Percent, value: 0.4)), StatWhile(cond: HpBelow(0.3), modifier: (stat: MagicResist, kind: Percent, value: 0.4))]),
 
+    // ================= RÉCOLTE =================
+    (id: "bras_de_bucheron", name: "Bras de bûcheron", line: "recolte", mastery: 3,
+     description: "Des journées à la hache. +10 % de puissance physique.",
+     effects: [Stat((stat: PhysicalPower, kind: Percent, value: 0.1))]),
+    (id: "pas_du_cueilleur", name: "Pas du cueilleur", line: "recolte", mastery: 10,
+     description: "Vous connaissez les sentiers. +8 % de vitesse de déplacement, +1 régén. de vie.",
+     effects: [Stat((stat: MoveSpeed, kind: Percent, value: 0.08)), Stat((stat: HpRegen, kind: Flat, value: 1.0))]),
+    (id: "coureur_des_bois", name: "Coureur des bois", line: "recolte", mastery: 25,
+     description: "Rien ne vous surprend plus en forêt. +6 % d'esquive, +10 % de PV max.",
+     effects: [Stat((stat: DodgeChance, kind: Flat, value: 0.06)), Stat((stat: MaxHp, kind: Percent, value: 0.1))]),
+
+    // ================= FORGE =================
+    (id: "bras_de_forgeron", name: "Bras de forgeron", line: "forge", mastery: 3,
+     description: "Le marteau, mille fois par jour. +8 % de PV max, +5 armure.",
+     effects: [Stat((stat: MaxHp, kind: Percent, value: 0.08)), Stat((stat: Armor, kind: Flat, value: 5.0))]),
+    (id: "habitue_des_braises", name: "Habitué des braises", line: "forge", mastery: 12,
+     description: "Les brûlures ne vous font plus rien. +15 résistance magique.",
+     effects: [Stat((stat: MagicResist, kind: Flat, value: 15.0))]),
+    (id: "entretien", name: "Entretien", line: "forge", mastery: 30,
+     description: "Vous affûtez et rivetez chaque soir. +10 % d'armure, +5 % de puissance physique et magique.",
+     effects: [Stat((stat: Armor, kind: Percent, value: 0.1)), Stat((stat: PhysicalPower, kind: Percent, value: 0.05)), Stat((stat: MagicPower, kind: Percent, value: 0.05))]),
+
     // ================= MAINS NUES =================
     (id: "poings_de_fer", name: "Poings de fer", line: "poings", mastery: 3, needs_equipped: true,
      description: "+30 % de vitesse d'attaque à mains nues.",

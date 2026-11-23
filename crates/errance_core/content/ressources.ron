@@ -1,0 +1,20 @@
+// Ressources récoltées en expédition, puis travaillées à l'atelier.
+// node : où on les trouve (Tree = arbre marqué, Vein = filon, Herb = touffe
+// de plantes, Carcass = bête abattue).
+// material : la famille d'objets qu'elles servent à fabriquer.
+// secondary : la ressource d'appoint de ces recettes (manche, lanières...).
+// tiers : le nom de la ressource à chaque tier (T1 → T8).
+[
+    (id: "bois", name: "Bois", node: Tree, material: Wood, secondary: "peau", color: (0.55, 0.38, 0.22),
+     description: "Arcs, bâtons, boucliers... et les manches de tout le reste.",
+     tiers: ["Bois mort", "Bûches de frêne", "Bûches de chêne", "Bûches d'if", "Bois de fer", "Bois-de-lune", "Bois spectral", "Bois-monde"]),
+    (id: "minerai", name: "Minerai", node: Vein, material: Metal, secondary: "bois", color: (0.6, 0.62, 0.68),
+     description: "Lames, masses, plaques. Le forgeron en veut toujours plus.",
+     tiers: ["Minerai rouillé", "Minerai de fer", "Minerai d'acier", "Minerai noir", "Cobalt brut", "Mithril brut", "Adamantite brute", "Astralite brute"]),
+    (id: "peau", name: "Peau", node: Carcass, material: Leather, secondary: "fibre", color: (0.58, 0.4, 0.28),
+     description: "Prélevée sur les bêtes abattues. Armures de cuir, lanières.",
+     tiers: ["Peau crue", "Peau souple", "Peau épaisse", "Peau cloutée", "Peau de wyverne", "Peau runique", "Peau d'ombre", "Peau draconique"]),
+    (id: "fibre", name: "Fibre", node: Herb, material: Cloth, secondary: "peau", color: (0.75, 0.78, 0.5),
+     description: "Lin, chanvre, soies étranges. Robes, capuches, capes.",
+     tiers: ["Herbes sèches", "Lin", "Chanvre", "Soie sauvage", "Soie d'araignée", "Fil runique", "Fil astral", "Fil céleste"]),
+]

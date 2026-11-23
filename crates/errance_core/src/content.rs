@@ -5,6 +5,7 @@
 //! on édite le `.ron`, on lance `cargo test` (le test `contenu_valide`
 //! vérifie toutes les références) et c'est tout.
 
+use crate::craft::{NodeKind, ResourceDef};
 use crate::item::{AffixDef, EquipSlot, ItemBase, UniqueDef};
 use crate::look::Rgb;
 use crate::mastery::{LineCategory, LineDef};
@@ -150,6 +151,19 @@ pub struct ZoneDef {
     /// Couleur du ciel / brouillard.
     #[serde(default = "sky")]
     pub sky: Rgb,
+    /// Nœuds de récolte : (type, nombre). Vide = un mélange par défaut.
+    #[serde(default)]
+    pub nodes: Vec<(NodeKind, u32)>,
+}
+
+impl ZoneDef {
+    pub fn node_counts(&self) -> Vec<(NodeKind, u32)> {
+        if self.nodes.is_empty() {
+            vec![(NodeKind::Tree, 5), (NodeKind::Vein, 4), (NodeKind::Herb, 4)]
+        } else {
+            self.nodes.clone()
+        }
+    }
 }
 
 fn zone_size() -> f32 {
@@ -180,6 +194,7 @@ pub struct Content {
     pub chores: Vec<ChoreDef>,
     pub zones: Vec<ZoneDef>,
     pub names: NameLists,
+    pub resources: Vec<ResourceDef>,
     line_idx: HashMap<String, usize>,
     skill_idx: HashMap<String, usize>,
     passive_idx: HashMap<String, usize>,
@@ -211,6 +226,7 @@ const UNIQUE_FILES: &[(&str, &str)] = files!["uniques.ron"];
 const ENEMY_FILES: &[(&str, &str)] = files!["ennemis.ron"];
 const CHORE_FILES: &[(&str, &str)] = files!["corvees.ron"];
 const ZONE_FILES: &[(&str, &str)] = files!["zones.ron"];
+const RESOURCE_FILES: &[(&str, &str)] = files!["ressources.ron"];
 const NAMES: &str = include_str!("../content/noms.ron");
 
 fn parse_all<T: for<'de> Deserialize<'de>>(files: &[(&str, &str)], errors: &mut Vec<String>) -> Vec<T> {
@@ -247,6 +263,7 @@ impl Content {
         let enemies: Vec<EnemyDef> = parse_all(ENEMY_FILES, &mut errors);
         let chores: Vec<ChoreDef> = parse_all(CHORE_FILES, &mut errors);
         let zones: Vec<ZoneDef> = parse_all(ZONE_FILES, &mut errors);
+        let resources: Vec<ResourceDef> = parse_all(RESOURCE_FILES, &mut errors);
         let names = match ron::from_str::<NameLists>(NAMES) {
             Ok(n) => n,
             Err(e) => {
@@ -272,6 +289,7 @@ impl Content {
             chores,
             zones,
             names,
+            resources,
             line_idx,
             skill_idx,
             passive_idx,
@@ -350,6 +368,24 @@ impl Content {
                 }
             }
         }
+        for r in &self.resources {
+            if r.tiers.len() != 8 {
+                e.push(format!("ressource {} : il faut 8 noms de tiers", r.id));
+            }
+            if !r.secondary.is_empty() && self.resource(&r.secondary).is_none() {
+                e.push(format!("ressource {} : ressource d'appoint inconnue {}", r.id, r.secondary));
+            }
+        }
+        for kind in [NodeKind::Tree, NodeKind::Vein, NodeKind::Herb, NodeKind::Carcass] {
+            if self.resource_of(kind).is_none() {
+                e.push(format!("aucune ressource pour les nœuds {kind:?}"));
+            }
+        }
+        for l in [crate::craft::LINE_GATHER, crate::craft::LINE_FORGE] {
+            if self.line(l).is_none() {
+                e.push(format!("voie de métier manquante : {l}"));
+            }
+        }
         // Chaque voie d'arme a au moins un skill par emplacement d'arme.
         for l in self.lines.iter().filter(|l| l.category == LineCategory::Weapon) {
             for slot in [SkillSlot::Basic, SkillSlot::Weapon1, SkillSlot::Weapon2, SkillSlot::Weapon3] {
@@ -396,6 +432,15 @@ impl Content {
         self.zones.iter().find(|z| z.id == id)
     }
 
+    pub fn resource(&self, id: &str) -> Option<&ResourceDef> {
+        self.resources.iter().find(|r| r.id == id)
+    }
+
+    /// La ressource qu'on tire d'un type de nœud.
+    pub fn resource_of(&self, kind: NodeKind) -> Option<&ResourceDef> {
+        self.resources.iter().find(|r| r.node == kind)
+    }
+
     pub fn chore(&self, id: &str) -> Option<&ChoreDef> {
         self.chores.iter().find(|c| c.id == id)
     }
@@ -434,9 +479,9 @@ mod tests {
         let (c, errors) = Content::load();
         assert!(errors.is_empty(), "Problèmes dans le contenu :\n{}", errors.join("\n"));
         println!(
-            "voies {} · skills {} · talents {} · objets {} · affixes {} · uniques {} · ennemis {} · corvées {}",
+            "voies {} · skills {} · talents {} · objets {} · affixes {} · uniques {} · ennemis {} · corvées {} · zones {} · ressources {}",
             c.lines.len(), c.skills.len(), c.passives.len(), c.bases.len(), c.affixes.len(),
-            c.uniques.len(), c.enemies.len(), c.chores.len()
+            c.uniques.len(), c.enemies.len(), c.chores.len(), c.zones.len(), c.resources.len()
         );
         assert!(c.skills.len() > 100);
         assert!(c.bases.len() > 40);

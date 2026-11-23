@@ -27,6 +27,9 @@ pub struct MenuState {
     pub shop_day: u32,
     pub scroll: f32,
     pub npc_skill: Option<SkillSlot>,
+    /// Atelier : tier affiché et recette choisie.
+    pub craft_tier: u8,
+    pub craft_sel: Option<String>,
 }
 
 #[derive(Component)]
@@ -137,6 +140,27 @@ fn menu_actions(
                     toasts.push(format!("Vendu pour {v} po."));
                 }
                 menu.bag_sel = None;
+            }
+            UiAction::CraftTier(t) => {
+                menu.craft_tier = t;
+                menu.craft_sel = None;
+            }
+            UiAction::CraftSelect(b) => menu.craft_sel = Some(b),
+            UiAction::Craft(b, t) => match errance_core::craft::craft(c, &mut game.0, &b, t) {
+                Ok((it, up)) => {
+                    toasts.push(format!("Forgé : {} ({}) !", item_name(c, &it), it.quality.label()));
+                    if let Some(u) = up {
+                        toasts.push(format!("* Forge : niveau {} !", u.to));
+                        game.0.hero.fix_loadout(c);
+                    }
+                    commands.write_message(crate::audio::PlaySfx(if it.quality >= errance_core::item::Quality::Excellent { crate::audio::Sfx::LevelUp } else { crate::audio::Sfx::Hit }));
+                }
+                Err(e) => toasts.push(e),
+            },
+            UiAction::SellResource(i) => {
+                if let Some(v) = game.0.sell_resource(i) {
+                    toasts.push(format!("Vendu pour {v} po."));
+                }
             }
             UiAction::Buy(i) => {
                 if let Some(it) = menu.shop.get(i).cloned() {
@@ -375,6 +399,7 @@ fn rebuild_panel(
         Panel::Inn => "Auberge".into(),
         Panel::Company(_) => "Compagnie".into(),
         Panel::Intro => "Gué-Rouge".into(),
+        Panel::Workshop => "Atelier du forgeron".into(),
     };
     let close_label = match panel {
         Panel::Summary => "Retour en ville",
@@ -419,11 +444,12 @@ fn rebuild_panel(
         Panel::Chore(id) => crate::minigames::build_chore_game(&mut commands, body, &fonts, &id),
         Panel::Company(id) => build_company(&mut commands, body, &fonts, p, id),
         Panel::Intro => build_intro(&mut commands, body, &fonts),
+        Panel::Workshop => crate::workshop::build_workshop(&mut commands, body, &fonts, p, &menu),
     }
 }
 
 /// Colonne défilante.
-fn scroll_col(width: Val) -> impl Bundle {
+pub fn scroll_col(width: Val) -> impl Bundle {
     (
         Node {
             flex_direction: FlexDirection::Column,
@@ -472,7 +498,7 @@ fn item_row(fonts: &Fonts, it: &Item, action: UiAction, selected: bool, extra: S
     )
 }
 
-fn item_details(c: &mut ChildSpawnerCommands, fonts: &Fonts, p: &errance_core::profile::Profile, it: &Item) {
+pub fn item_details(c: &mut ChildSpawnerCommands, fonts: &Fonts, p: &errance_core::profile::Profile, it: &Item) {
     let ct = content();
     let Some(b) = ct.base(&it.base) else { return };
     c.spawn(ui::bold(fonts, item_name(ct, it), 14.0, quality_color(it)));
@@ -540,6 +566,14 @@ fn build_bag(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_c
             for (i, it) in p.bag.iter().enumerate() {
                 let slot = c.base(&it.base).map(|b| b.slot.label()).unwrap_or("");
                 col.spawn(item_row(fonts, it, UiAction::SelectBag(i), menu.bag_sel == Some(i), slot.to_string()));
+            }
+            if !p.resources.is_empty() {
+                col.spawn(ui::bold(fonts, "Ressources (pour l'atelier)", 12.0, pal::INK));
+                for r in &p.resources {
+                    if let Some(d) = c.resource(&r.id) {
+                        col.spawn(ui::label(fonts, format!("T{} {} ×{}", r.tier, d.tier_name(r.tier), r.count), 11.0, rgb(d.color)));
+                    }
+                }
             }
         });
         // Détails.

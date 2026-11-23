@@ -33,8 +33,15 @@ pub fn random_item(c: &Content, rng: &mut Rng, uid: u64, tier: u8, slot: Option<
         return Some(item);
     }
     item.quality = roll_quality(rng, luck);
+    roll_affixes(c, rng, &mut item, base.slot);
+    Some(item)
+}
+
+/// Tire les affixes d'un objet selon sa qualité.
+pub fn roll_affixes(c: &Content, rng: &mut Rng, item: &mut Item, slot: EquipSlot) {
+    item.affixes.clear();
     let n = item.quality.affix_count();
-    let mut pool: Vec<_> = c.affixes.iter().filter(|a| a.allows(base.slot)).collect();
+    let mut pool: Vec<_> = c.affixes.iter().filter(|a| a.allows(slot)).collect();
     for _ in 0..n {
         let w: Vec<f32> = pool.iter().map(|a| a.weight).collect();
         let Some(i) = rng.weighted(&w) else { break };
@@ -42,7 +49,6 @@ pub fn random_item(c: &Content, rng: &mut Rng, uid: u64, tier: u8, slot: Option<
         let v = rng.range_f32(a.min, a.max);
         item.affixes.push(AffixRoll { affix: a.id.clone(), value: v });
     }
-    Some(item)
 }
 
 /// Butin d'un ennemi vaincu : pièces + éventuellement un objet.
