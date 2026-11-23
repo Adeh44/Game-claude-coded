@@ -1,31 +1,37 @@
 # Prochaine session
 
-## État réel (fin de nuit 22/11/2026)
-- Version : v0.7, branche `claude/mobile-rpg-game-design-o55gg9`.
-- **Tout est commité en local, rien n'est poussé** : push refusé (403, app Claude GitHub absente du dépôt). Si la machine cloud a été recyclée, le travail est perdu sauf si le push a réussi entre-temps. Vérifier en premier.
-- APK : jamais construit (la CI n'a jamais tourné). Le code Rust passe `cargo check --target aarch64-linux-android` (mesuré) ; Gradle + GameActivity restent « prédits ».
-- Tests : `cargo test -p errance_core` → 38 tests verts. Clippy propre sur core + sim.
-- Jeu testé sur PC uniquement (rendu logiciel, souris simulée).
+## État réel (23/11/2026, fin de la partie a)
+- Version v0.7, branche `claude/mobile-rpg-game-design-o55gg9`, **poussée**. La CI est verte (tests + APK). Release : `apk-latest`.
+- Environnement cloud « Game-claude-coded » : son script installe les libs (alsa, udev, xkbcommon, xvfb, xdotool, imagemagick, clang, libc6-dev-arm64-cross), met Rust à jour et précompile le jeu. Vérifier qu'il a bien tourné : `ls target/debug/errance`.
+- 38 tests verts (`cargo test -p errance_core`).
+- Adeh n'a pas encore testé l'APK sur son téléphone.
 
-## Programme (dans l'ordre)
-1. Adeh installe l'app Claude sur le dépôt (claude.ai/connect-github) → `git push` → regarder la CI (job « APK Android »).
-2. Si l'APK se construit : release `apk-latest` → installer sur le téléphone → playtest (noter en vrac, on trie avec le skill epinoia-playtest adapté).
-3. Corriger ce que le téléphone révèle : taille/emplacement des boutons, perf (ombres coupées sur Android, décor réduit), toucher multi-doigts.
-4. Si l'APK échoue : lire le log CI ; pistes connues → version de `games-activity` vs crate `android-activity`, NDK, nom de la lib (`errance_game`).
+## Consignes d'Adeh (valables jusqu'à nouvel ordre)
+- Travailler jusqu'à ce qu'Adeh dise qu'il est revenu.
+- Un fil par chantier (~45-60 min). En fin de chantier : docs → commit → push → `create_session` du fil suivant (même environnement `env_012MCygdvnM7WLQmJSPkCmzt`, même dépôt, même branche) avec le prompt de relais mis à jour, puis s'arrêter.
+- Ne jamais attendre une durée annoncée : lancer en arrière-plan et vérifier toutes les 2 minutes.
+- Quand Adeh revient : finir l'étape en cours, récap (négatif d'abord, bonnes surprises détaillées, quoi tester, mini-leçon Rust), commit, push.
+
+## Programme (chantiers dans l'ordre)
+1. ~~CI verte + APK~~ (fait).
+2. **Récolte & artisanat** (boucle à la Albion) :
+   - nœuds dans les zones (arbres → bois, filons → minerai, carcasses de bêtes → peaux), récoltés en restant près d'eux (jauge) ; quantité et tier selon la zone et la maîtrise ;
+   - nouvelles Voies `recolte` et `forge` (catégorie Job) avec talents ;
+   - ressources empilables dans le sac ;
+   - atelier en ville : recette = base + ressources du tier, qualité tirée avec bonus de maîtrise Forge ;
+   - tests core + test de contenu, captures.
+3. Quête écrite « Gérald le Borgne » (rumeur taverne → embuscade → repaire → boss, récompense unique).
+4. Givrecol : passages d'escalade (mini-jeu de prises, endurance, froid).
+5. Puis `IDEES_EN_ATTENTE.md`.
 
 ## Réflexes
-- Avant d'ajouter du contenu : modifier le `.ron`, puis `cargo test -p errance_core contenu`.
-- Avant de toucher à l'équilibrage : `cargo run -p errance_sim --release -- 200`.
-- Captures sans téléphone : `ERRANCE_DEMO=field:marches:auto:stuff:party:brawl ERRANCE_SCREENSHOT=x.png ERRANCE_FRAMES=200 xvfb-run -a -s "-screen 0 1280x640x24" ./target/debug/errance` (voir `demo_driver` dans `crates/errance_game/src/lib.rs` pour les mots-clés).
-- Après `cargo build`, première compilation Bevy ≈ 13 min : la lancer en arrière-plan.
+- Contenu : modifier le `.ron` puis `cargo test -p errance_core contenu`.
+- Équilibrage : `cargo run -p errance_sim --release -- 200`.
+- Captures : `ERRANCE_DEMO=… ERRANCE_SCREENSHOT=x.png ERRANCE_FRAMES=200 xvfb-run -a -s "-screen 0 1280x640x24" ./target/debug/errance` (mots-clés dans `demo_driver`, `crates/errance_game/src/lib.rs`).
 
-## Documents périmés
-Aucun connu.
-
-## Prompt de relais (à coller)
+## Prompt de relais (à coller ou envoyé par create_session)
 ```
-On reprend Errance (RPG mobile Rust/Bevy). Lis dans l'ordre : CLAUDE.md, docs/claude/METHODE.md, docs/claude/REFERENCE.md, docs/claude/IDEES_EN_ATTENTE.md, docs/claude/PROCHAINE_SESSION.md.
-Je t'autorise à rattacher et cloner Adeh44/Game-claude-coded, push compris, sur la branche claude/mobile-rpg-game-design-o55gg9.
-Questions d'ouverture en quiz : sur quelle machine je suis, est-ce que le push/la CI ont marché, est-ce que j'ai pu installer l'APK.
-Programme : faire passer la CI, puis corriger ce que le premier test sur téléphone révèle.
+On reprend Errance (RPG mobile Rust/Bevy, dépôt Adeh44/Game-claude-coded, branche claude/mobile-rpg-game-design-o55gg9). Tu as l'autorisation de commit et push sur cette branche.
+Lis dans l'ordre : CLAUDE.md, docs/claude/METHODE.md, docs/claude/REFERENCE.md, docs/claude/IDEES_EN_ATTENTE.md, docs/claude/PROCHAINE_SESSION.md, et applique les « Consignes d'Adeh ».
+Fais le chantier « Récolte & artisanat ». Adeh dort/est absent : ne lui pose pas de questions, avance seul, et en fin de chantier passe le relais au fil suivant comme décrit.
 ```
