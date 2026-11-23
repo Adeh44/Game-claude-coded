@@ -3,7 +3,7 @@
 ## État réel (23/11/2026, fin du chantier Récolte & artisanat)
 - Version v0.8, branche `claude/mobile-rpg-game-design-o55gg9`, poussée. Release CI : `apk-latest`.
 - Nouveau : récolte en expédition (arbres entaillés, filons, plantes, carcasses de bêtes, jauge), Voies Récolte et Forge (+6 talents), réserve de ressources, Atelier du forgeron en ville (recettes T1 → T8, qualité selon la Forge, vente des ressources).
-- 46 tests verts (`cargo test -p errance_core`).
+- 47 tests verts (`cargo test -p errance_core`).
 - Le script d'environnement n'avait PAS tourné ce matin-là (pas de `target/`, libs absentes) : installer à la main `libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libxkbcommon-x11-0 xvfb xdotool imagemagick pkg-config` (miroir Ubuntu parfois en 504 : réessayer).
 - Adeh n'a pas encore testé l'APK sur son téléphone.
 
@@ -23,7 +23,8 @@
 ## Réflexes
 - Contenu : modifier le `.ron` puis `cargo test -p errance_core contenu`.
 - Équilibrage : `cargo run -p errance_sim --release -- 200`.
-- Démo atelier : `ERRANCE_DEMO=workshop:res` (ressources de test). Récolte : `ERRANCE_DEMO=field:marches`.
+- Démo atelier : `ERRANCE_DEMO=workshop:res[:forge]` (ressources de test, forge une épée). Récolte : `ERRANCE_DEMO=field:marches:gather` + `ERRANCE_FRAMES=14` (le rendu logiciel est lent, l arbre est vidé vers 17 images) ; `ERRANCE_DEBUG_GATHER=1` trace la jauge.
+- Captures : il faut aussi `mesa-vulkan-drivers libgl1-mesa-dri` (sinon panique « no adapter »).
 - Captures : `ERRANCE_DEMO=… ERRANCE_SCREENSHOT=x.png ERRANCE_FRAMES=200 xvfb-run -a -s "-screen 0 1280x640x24" ./target/debug/errance` (mots-clés dans `demo_driver`, `crates/errance_game/src/lib.rs`).
 
 ## Prompt de relais (à coller ou envoyé par create_session)

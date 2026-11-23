@@ -80,10 +80,11 @@ pub struct ResourceStack {
     pub count: u32,
 }
 
-/// Prix de vente d'une unité (au marchand de l'atelier).
-pub fn resource_unit_value(tier: u8) -> u32 {
-    let v = 4.0 * 3.2f32.powi(tier.clamp(1, 8) as i32 - 1) / 6.0;
-    v.round().max(1.0) as u32
+/// Prix de rachat d'une pile entière (le forgeron paie peu : forger
+/// soi-même rapporte toujours plus que revendre la matière brute).
+pub fn resource_value(tier: u8, count: u32) -> u32 {
+    let unit = 4.0 * 3.2f32.powi(tier.clamp(1, 8) as i32 - 1) / 24.0;
+    (unit * count as f32).round().max(1.0) as u32
 }
 
 // ------------------------------------------------------------------
@@ -375,6 +376,17 @@ mod tests {
         assert_eq!(stack_count(&s, "bois", 2), 1);
         assert!(stack_take(&mut s, "bois", 2, 1));
         assert_eq!(s.len(), 1);
+    }
+
+    #[test]
+    fn forger_vaut_mieux_que_revendre() {
+        let c = content();
+        for t in 1..=8u8 {
+            let r = recipe(c, "epee_courte", t.max(1)).unwrap();
+            let raw: u32 = r.needs.iter().map(|(_, n)| resource_value(t, *n)).sum();
+            let it = Item::new(0, "epee_courte", t);
+            assert!(item_value(&it) / 2 + 1 >= raw, "tier {t} : brut {raw} > objet {}", item_value(&it) / 2);
+        }
     }
 
     #[test]

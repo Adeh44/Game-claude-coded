@@ -99,7 +99,7 @@ pub fn spawn_node(p: &mut Painter, cmd: &mut Commands, n: &ResNode, zone_foliage
     };
     // Repère : un petit losange qui flotte au-dessus.
     let h = match n.kind {
-        NodeKind::Tree => 3.4,
+        NodeKind::Tree => 4.3,
         NodeKind::Vein => 1.6,
         _ => 1.2,
     };
@@ -192,6 +192,10 @@ fn gather_step(
             let dt = time.delta_secs();
             let f = &mut *field;
             let tick = f.gathering.tick(&mut f.nodes, pos, dt, lvl, &mut f.rng);
+            if std::env::var("ERRANCE_DEBUG_GATHER").is_ok() {
+                let d = f.nodes.iter().map(|n| n.pos.distance(pos)).fold(f32::MAX, f32::min);
+                eprintln!("GATHER {tick:?} nearest={d:.2}");
+            }
             let name_of = |n: &ResNode| c.resource_of(n.kind).map(|r| r.tier_name(n.tier).to_string()).unwrap_or_default();
             match tick {
                 GatherTick::Idle => {}

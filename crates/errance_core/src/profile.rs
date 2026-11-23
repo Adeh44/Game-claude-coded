@@ -225,7 +225,7 @@ impl Profile {
             return None;
         }
         let s = self.resources.remove(idx);
-        let v = crate::craft::resource_unit_value(s.tier) * s.count;
+        let v = crate::craft::resource_value(s.tier, s.count);
         self.earn(v);
         Some(v)
     }

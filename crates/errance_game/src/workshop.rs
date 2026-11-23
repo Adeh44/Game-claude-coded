@@ -6,7 +6,7 @@ use crate::ui::{self, ButtonLook, Fonts, UiAction, font, pal};
 use bevy::prelude::*;
 use bevy::ui_widgets::Button;
 use errance_core::content::content;
-use errance_core::craft::{LINE_FORGE, forge_luck, missing, recipes_at, resource_unit_value, stack_count};
+use errance_core::craft::{LINE_FORGE, forge_luck, missing, recipes_at, resource_value, stack_count};
 use errance_core::item::Item;
 use errance_core::profile::Profile;
 
@@ -51,7 +51,7 @@ pub fn build_workshop(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &
             }
             for (i, r) in p.resources.iter().enumerate() {
                 let Some(d) = c.resource(&r.id) else { continue };
-                let v = resource_unit_value(r.tier) * r.count;
+                let v = resource_value(r.tier, r.count);
                 col.spawn(recipe_row(fonts, format!("T{} {} ×{}", r.tier, d.tier_name(r.tier), r.count), format!("vendre {v} po"), UiAction::SellResource(i), false, false));
             }
             col.spawn(ui::label(fonts, format!("Forge niv. {forge} · Récolte niv. {}", p.hero.masteries.level(errance_core::craft::LINE_GATHER)), 10.5, pal::DIM));

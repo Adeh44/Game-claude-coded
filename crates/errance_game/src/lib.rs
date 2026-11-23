@@ -293,7 +293,14 @@ fn demo_driver(
                 Some("gate") => overlay.0 = Some(Panel::Gate),
                 Some("chores") => overlay.0 = Some(Panel::Chores),
                 Some("market") => overlay.0 = Some(Panel::Market),
-                Some("workshop") => overlay.0 = Some(Panel::Workshop),
+                Some("workshop") => {
+                    overlay.0 = Some(Panel::Workshop);
+                    if parts.contains(&"forge") {
+                        queue.0.push(UiAction::CraftSelect("epee_courte".into()));
+                        queue.0.push(UiAction::Craft("epee_courte".into(), 1));
+                        queue.0.push(UiAction::CraftSelect("epee_courte".into()));
+                    }
+                }
                 Some("company") => {
                     if let Some(co) = g.0.world.companies.first() {
                         queue.0.push(UiAction::OpenCompany(co.id));
@@ -328,6 +335,15 @@ fn demo_driver(
                     e.pos = hp + errance_core::math::Vec2::new(-2.0 + k as f32 * 2.0, -5.0);
                     e.home = e.pos;
                 }
+            }
+        }
+        if parts.contains(&"gather") && *frame == 12 {
+            // Le héros se poste à côté du nœud le plus proche (arbre, filon...).
+            let hp = f.combat.get(f.hero).map(|h| h.pos).unwrap_or_default();
+            let near = f.nodes.iter().min_by(|a, b| a.pos.distance(hp).total_cmp(&b.pos.distance(hp))).map(|n| n.pos);
+            let hero = f.hero;
+            if let (Some(np), Some(h)) = (near, f.combat.get_mut(hero)) {
+                h.pos = np + errance_core::math::Vec2::new(0.0, 1.2);
             }
         }
         if parts.contains(&"auto") {
