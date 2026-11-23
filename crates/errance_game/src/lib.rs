@@ -80,6 +80,7 @@ struct ToastBox;
 
 #[bevy_main]
 pub fn main() {
+    save::install_panic_hook();
     let window = Window {
         title: "Errance".into(),
         #[cfg(target_os = "android")]
@@ -101,6 +102,7 @@ pub fn main() {
         .add_systems(Update, (title_actions.run_if(in_state(AppState::Title)), show_toasts, auto_screenshot, save::autosave))
         // La démo agit avant tout le monde (la file d'actions est vidée en fin d'image).
         .add_systems(PreUpdate, demo_driver)
+        .add_systems(Update, breadcrumbs)
         .run();
 }
 
@@ -120,8 +122,11 @@ fn setup_ui_camera(mut commands: Commands) {
 #[derive(Component)]
 struct TitleScreen;
 
-fn build_title(mut commands: Commands, fonts: Res<Fonts>) {
+fn build_title(mut commands: Commands, fonts: Res<Fonts>, mut report: Local<Option<Option<String>>>) {
     let has_save = save::load().is_some();
+    // Le rapport du dernier plantage n'est lu qu'une fois (au lancement).
+    let crash = report.get_or_insert_with(save::take_crash_report).clone();
+    save::mark("titre");
     commands
         .spawn((
             Node {
@@ -147,6 +152,14 @@ fn build_title(mut commands: Commands, fonts: Res<Fonts>) {
             p.spawn(ui::button(&fonts, "Nouvelle partie", UiAction::NewGame, px(220), 15.0));
             p.spawn(Node { height: px(18), ..default() });
             p.spawn(ui::label(&fonts, "Joystick à gauche · skills à droite · tenez le téléphone à l'horizontale", 11.0, pal::DIM));
+            if let Some(c) = &crash {
+                p.spawn((
+                    Node { max_width: px(620), margin: UiRect::top(px(10)), padding: UiRect::all(px(6)), border: UiRect::all(px(1)), border_radius: BorderRadius::all(px(5)), ..default() },
+                    BorderColor::all(pal::RED),
+                    BackgroundColor(Color::srgba(0.3, 0.05, 0.05, 0.6)),
+                    children![(Text::new(format!("{c}\nFais une capture de ce message pour Claude.")), ui::font(&fonts.regular, 10.5), TextColor(pal::INK))],
+                ));
+            }
         });
 }
 
@@ -422,4 +435,31 @@ fn demo_driver(
         }
     }
     let _ = &mut stick;
+}
+
+/// Boîte noire : note où en est le jeu (écran, panneau, chargement).
+fn breadcrumbs(state: Res<State<AppState>>, ov: Res<Overlay>, time: Res<Time>, mut since: Local<(Option<AppState>, f32)>) {
+    let st = state.get().clone();
+    if since.0.as_ref() != Some(&st) {
+        *since = (Some(st.clone()), 0.0);
+    }
+    since.1 += time.delta_secs();
+    let place = match st {
+        AppState::Title => return,
+        AppState::Town => "ville",
+        AppState::Field => "expédition",
+    };
+    let step = if since.1 < 3.0 {
+        format!("{place} (chargement)")
+    } else {
+        match &ov.0 {
+            Some(p) => format!("{place}, panneau {p:?}"),
+            None => place.to_string(),
+        }
+    };
+    save::mark(&step);
+    // Outil de test de la boîte noire : ERRANCE_TEST_PANIC=1 fait planter en ville.
+    if st == AppState::Town && since.1 > 4.0 && std::env::var("ERRANCE_TEST_PANIC").is_ok() {
+        panic!("plantage de test");
+    }
 }

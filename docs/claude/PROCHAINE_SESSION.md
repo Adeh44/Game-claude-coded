@@ -7,7 +7,8 @@
 - `demo_driver` tourne maintenant en PreUpdate (sinon ses actions étaient perdues, voir METHODE).
 - Le script d'environnement n'avait encore PAS tourné : libs installées à la main (liste ci-dessous), build Bevy ~21 min.
 - Libs : `libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libxkbcommon-x11-0 xvfb xdotool imagemagick pkg-config mesa-vulkan-drivers libgl1-mesa-dri` (miroir Ubuntu parfois en 504 : boucle de réessais).
-- Adeh n'a pas encore testé l'APK sur son téléphone. À tester en priorité : le panneau d'escalade au doigt (taille des prises, lisibilité).
+- 23/11 : premier test d'Adeh sur téléphone : le jeu plante quelques secondes après « Nouvelle partie » (le titre s'affiche). Pas reproductible sur PC (60 s en ville sans souci). Ajout d'une boîte noire (voir METHODE) ; en attente de la capture du rapport pour corriger. Pistes non vérifiées : son (AAudio), pilote graphique (deux caméras, MSAA coupé seulement sur la 3D), mémoire.
+- À tester ensuite : le panneau d'escalade au doigt (taille des prises, lisibilité).
 
 ## Consignes d'Adeh (valables jusqu'à nouvel ordre)
 - Travailler jusqu'à ce qu'Adeh dise qu'il est revenu.
