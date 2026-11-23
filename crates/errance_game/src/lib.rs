@@ -50,6 +50,8 @@ pub enum Panel {
     Company(u32),
     Intro,
     Workshop,
+    /// Dialogue d'une quête écrite (offre ou étape en cours).
+    Quest(String),
 }
 
 #[derive(Resource, Default)]
@@ -262,6 +264,17 @@ fn demo_driver(
             }
             p.gold = p.gold.max(60);
         }
+        if parts.contains(&"rumor") {
+            // La rumeur de Gérald est disponible à la taverne.
+            p.counters.expeditions = p.counters.expeditions.max(1);
+        }
+        if let Some(i) = parts.iter().position(|x| *x == "quest") {
+            // ERRANCE_DEMO=quest:<étape> : directement en mission (0 = embuscade, 1 = fortin).
+            // gate:quest:<étape> : la porte avec la quête en cours.
+            let step: u32 = parts.get(i + 1).and_then(|s| s.parse().ok()).unwrap_or(0);
+            p.counters.expeditions = p.counters.expeditions.max(1);
+            p.quests.insert("gerald".into(), step);
+        }
         if parts.contains(&"party") || parts.contains(&"companion") {
             let ids: Vec<u32> = p.world.tavern().iter().take(2).map(|n| n.id).collect();
             for id in &ids {
@@ -283,9 +296,11 @@ fn demo_driver(
                 Some("field") => {
                     let zone = parts.get(1).copied().unwrap_or("marches").to_string();
                     let party = g.0.world.party().iter().map(|n| n.id).collect();
-                    commands.insert_resource(field::Expedition { zone, party, porter_for: None });
+                    commands.insert_resource(field::Expedition { zone, party, porter_for: None, quest: None });
                     next.set(AppState::Field);
                 }
+                Some("quest") => queue.0.push(UiAction::QuestTravel("gerald".into())),
+                Some("questpanel") => overlay.0 = Some(Panel::Quest("gerald".into())),
                 Some("bag") => overlay.0 = Some(Panel::Bag),
                 Some("character") => overlay.0 = Some(Panel::Character),
                 Some("atlas") => overlay.0 = Some(Panel::Atlas),
@@ -344,6 +359,22 @@ fn demo_driver(
             let hero = f.hero;
             if let (Some(np), Some(h)) = (near, f.combat.get_mut(hero)) {
                 h.pos = np + errance_core::math::Vec2::new(0.0, 1.2);
+            }
+        }
+        if parts.contains(&"ambush") && *frame == 12 {
+            // Le héros s'avance jusqu'à la ligne de l'embuscade.
+            let hero = f.hero;
+            let y = f.mission.as_ref().map(|m| m.trigger_y - 0.5);
+            if let (Some(y), Some(h)) = (y, f.combat.get_mut(hero)) {
+                h.pos = errance_core::math::Vec2::new(0.0, y);
+            }
+        }
+        if parts.contains(&"fort") && *frame == 12 {
+            // Le héros devant la brèche du fortin.
+            let hero = f.hero;
+            let half = f.combat.arena.half_extent.y;
+            if let Some(h) = f.combat.get_mut(hero) {
+                h.pos = errance_core::math::Vec2::new(0.0, -half + 15.0);
             }
         }
         if parts.contains(&"auto") {

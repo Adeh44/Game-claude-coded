@@ -1,0 +1,60 @@
+// Quêtes écrites. Une quête = une offre (dialogue), des étapes (chacune une
+// mission : une expédition aux monstres fixés, parfois une embuscade), un
+// épilogue et une récompense. L'avancement est sauvé dans `Profile.quests`.
+[
+    (id: "gerald", name: "Gérald le Borgne",
+     giver: "Mère Ortie, patronne du Pichet Fêlé",
+     hook: "Mère Ortie vous fait signe d'approcher. Elle a l'air d'avoir une rumeur à vendre.",
+     min_expeditions: 1,
+     offer: [
+        "« Penche-toi. Non, plus près. Tu sens le rat, mais tu tiens debout, c'est déjà ça. »",
+        "« Gérald le Borgne. Tu connais ? Il a pris la route du sud la semaine dernière. Trois charrettes de grain, deux cochers. Un seul est revenu. Sans ses oreilles. »",
+        "« Le prévôt ne bougera pas : Gérald le paie mieux que la ville. Moi, je paie en bière... et en pièces, si tu le fais tomber. »",
+        "« Commence par la route du sud, dans la forêt de Vergues. Ses hommes guettent les voyageurs. Fais-toi voyageur. »",
+     ],
+     steps: [
+        (id: "embuscade", title: "La route du sud",
+         objective: "Traverser la route du sud (forêt de Vergues) et survivre à l'embuscade.",
+         intro: [],
+         done: [
+            "Sur le corps de la Fouine, une carte griffonnée : une croix sur les Collines Sourdes.",
+            "Un mot, au dos : « Le Borgne attend la paye au vieux fortin. »",
+            "Mère Ortie, au retour : « Le vieux fortin ? Des ruines pleines d'os. Ça lui ressemble bien. Emmène du monde. Et reviens. »",
+         ],
+         mission: (name: "La route du sud", zone: "vergues", size: Some(24.0),
+            packs: [
+                [("loup_gris", 1)],
+                [("brigand_cogneur", 1)],
+                [("loup_gris", 2)],
+            ],
+            ambush: Some((at: 0.45,
+                enemies: [("la_fouine", 1), ("brigand_archer", 1), ("va_nu_pieds", 1)],
+                line: "Des sifflets dans les fourrés. « La bourse ou la vie, voyageur ! » C'est l'embuscade !")),
+         )),
+        (id: "repaire", title: "Le vieux fortin",
+         objective: "Monter au vieux fortin des Collines Sourdes et abattre Gérald le Borgne.",
+         intro: [
+            "« Le vieux fortin ? Des ruines pleines d'os. Ça lui ressemble bien. Emmène du monde. Et reviens. »",
+         ],
+         done: [
+            "Gérald tombe à genoux. « Mon œil... Prends-la, ma hache. Elle verra mieux avec toi qu'avec moi. »",
+            "Les brigands qui restent s'enfuient dans les collines. La route du sud est libre.",
+         ],
+         mission: (name: "Le vieux fortin", zone: "collines", size: Some(28.0),
+            packs: [
+                [("brigand_cogneur", 1), ("brigand_archer", 1)],
+                [("squelette_guerrier", 2)],
+                [("brigand_cogneur", 2)],
+                [("brigand_archer", 2)],
+            ],
+            boss: Some("gerald_le_borgne"),
+         )),
+     ],
+     epilogue: [
+        "Mère Ortie pose une chope devant vous. « Celle-là, c'est la maison qui paie. Et les suivantes aussi. »",
+        "Au comptoir, on ne parle plus que de ça. Certains disent que vous l'avez tué d'un seul coup. Vous ne les corrigez pas.",
+     ],
+     reward: (gold: 150, unique: Some("eclat_de_gerald"), reputation: [("gue_rouge", 50)],
+        lines: ["Mère Ortie vous glisse une bourse de 150 po. « Comme promis. »", "Gué-Rouge connaît votre nom."]),
+    ),
+]

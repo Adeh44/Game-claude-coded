@@ -103,6 +103,10 @@ pub enum UiAction {
     CraftSelect(String),
     Craft(String, u8),
     SellResource(usize),
+    // Quêtes
+    OpenQuest(String),
+    AcceptQuest(String),
+    QuestTravel(String),
     /// Rien (bouton décoratif / désactivé).
     None,
 }

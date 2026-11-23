@@ -50,6 +50,9 @@ pub struct Profile {
     /// Ressources récoltées (réserve de l'atelier, ne prend pas de place au sac).
     #[serde(default)]
     pub resources: Vec<crate::craft::ResourceStack>,
+    /// Quêtes écrites : id → étape en cours (= nombre d'étapes une fois finie).
+    #[serde(default)]
+    pub quests: BTreeMap<String, u32>,
 }
 
 impl Profile {
@@ -70,6 +73,7 @@ impl Profile {
             world: crate::world::World::default(),
             own_company: None,
             resources: vec![],
+            quests: BTreeMap::new(),
         };
         let rags = p.new_item("haillons", 1);
         let _ = hero.equip(c, rags);

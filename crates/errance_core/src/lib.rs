@@ -17,6 +17,7 @@ pub mod mastery;
 pub mod math;
 pub mod passive;
 pub mod profile;
+pub mod quest;
 pub mod rng;
 pub mod rules;
 pub mod skill;

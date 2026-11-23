@@ -34,6 +34,15 @@ fn far_enough(p: Vec2, others: &[Vec2], d: f32) -> bool {
 
 /// Dessine le plan d'une zone. Le départ est au sud (+y, vers la caméra).
 pub fn layout_zone(z: &ZoneDef, rng: &mut Rng) -> Layout {
+    layout_inner(z, None, rng)
+}
+
+/// Plan d'une mission de quête : les groupes sont écrits, posés dans l'ordre.
+pub fn layout_mission(z: &ZoneDef, packs: &[Vec<(String, u32)>], rng: &mut Rng) -> Layout {
+    layout_inner(z, Some(packs), rng)
+}
+
+fn layout_inner(z: &ZoneDef, fixed: Option<&[Vec<(String, u32)>]>, rng: &mut Rng) -> Layout {
     let half = z.size;
     let start = Vec2::new(0.0, half - 4.0);
     let mut packs = vec![];
@@ -44,15 +53,24 @@ pub fn layout_zone(z: &ZoneDef, rng: &mut Rng) -> Layout {
     }
     let weights: Vec<f32> = z.packs.iter().map(|p| p.weight).collect();
     let mut tries = 0;
-    while packs.len() < z.pack_count as usize && tries < 500 {
+    let wanted = fixed.map(|f| f.len()).unwrap_or(z.pack_count as usize);
+    while packs.len() < wanted && tries < 2000 {
         tries += 1;
         let p = Vec2::new(rng.range_f32(-half + 4.0, half - 4.0), rng.range_f32(-half + 4.0, half - 8.0));
-        if p.distance(start) < 12.0 || !far_enough(p, &centers, 8.0) {
+        // Une mission doit tout placer : on desserre petit à petit.
+        let spacing = if tries > 500 { 5.0 } else { 8.0 };
+        if p.distance(start) < 12.0 || !far_enough(p, &centers, spacing) {
             continue;
         }
-        let Some(k) = rng.weighted(&weights) else { break };
+        let group: &[(String, u32)] = match fixed {
+            Some(f) => &f[packs.len()],
+            None => {
+                let Some(k) = rng.weighted(&weights) else { break };
+                &z.packs[k].enemies
+            }
+        };
         let mut names = vec![];
-        for (id, n) in &z.packs[k].enemies {
+        for (id, n) in group {
             for _ in 0..*n {
                 names.push(id.clone());
             }
@@ -81,6 +99,22 @@ pub fn layout_zone(z: &ZoneDef, rng: &mut Rng) -> Layout {
             let tier = roll_node_tier(z.tier, rng);
             nodes.push(Node { pos: p, kind, tier, left: rng.range_u32(3, 5) });
             k += 1;
+        }
+    }
+    // Mission avec boss : les murs effondrés d'un fortin autour de lui, ouverts au sud.
+    if let (Some(_), Some((bp, _))) = (fixed, &boss) {
+        let n = 14;
+        for k in 0..n {
+            let a = k as f32 / n as f32 * std::f32::consts::TAU;
+            let dir = Vec2::from_angle(a);
+            // Brèche face au chemin d'arrivée (+y).
+            if dir.y > 0.75 {
+                continue;
+            }
+            let p = *bp + dir * 5.5;
+            let scale = rng.range_f32(0.9, 1.3);
+            placed.push(p);
+            decor.push((p, 0.55 * scale, Decor::Rock, scale));
         }
     }
     let mut put = |kind: Decor, n: usize, rng: &mut Rng, decor: &mut Vec<(Vec2, f32, Decor, f32)>| {

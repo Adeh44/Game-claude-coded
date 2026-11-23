@@ -55,15 +55,24 @@ fn make(b: &Build) -> Character {
 
 /// Un duel : le héros (piloté par ses règles, comme un compagnon) contre `n` monstres.
 fn duel(h: &Character, enemy: &str, n: usize, seed: u64) -> (Outcome, f32, f32) {
+    fight(h, &[(enemy, n)], seed)
+}
+
+/// Le héros contre un groupe mélangé (ex. l'embuscade de la quête).
+fn fight(h: &Character, group: &[(&str, usize)], seed: u64) -> (Outcome, f32, f32) {
     let c = content();
     let mut combat = Combat::new(seed, Arena::default());
     let spec = h.fighter_spec(c, Team::Ally, Controller::Companion { rules: h.rules.clone() });
     let hid = combat.spawn(spec, Vec2::ZERO);
     combat.leader = Some(hid);
-    let e = c.enemy(enemy).expect("ennemi inconnu");
-    for k in 0..n {
-        let s = enemy_spec(c, e);
-        combat.spawn(s, Vec2::new(4.0 + k as f32 * 0.8, (k as f32 - 1.0) * 1.2));
+    let mut k = 0;
+    for (enemy, n) in group {
+        let e = c.enemy(enemy).expect("ennemi inconnu");
+        for _ in 0..*n {
+            let s = enemy_spec(c, e);
+            combat.spawn(s, Vec2::new(4.0 + k as f32 * 0.8, (k as f32 - 1.0) * 1.2));
+            k += 1;
+        }
     }
     let dt = 1.0 / 30.0;
     let mut t = 0.0;
@@ -145,6 +154,11 @@ fn main() {
         ("chevalier_du_neant", 2),
         ("devoreur", 1),
     ];
+    // Rencontres de la quête « Gérald le Borgne » (voir quetes.ron).
+    let quests: Vec<(&str, Vec<(&str, usize)>)> = vec![
+        ("embuscade (Fouine + 2)", vec![("la_fouine", 1), ("brigand_archer", 1), ("va_nu_pieds", 1)]),
+        ("Gérald + archer", vec![("gerald_le_borgne", 1), ("brigand_archer", 1)]),
+    ];
     println!("Simulateur Errance — {n_fights} combats par duel\n");
     for b in &builds {
         let h = make(b);
@@ -177,6 +191,19 @@ fn main() {
             let avg_t = if wins > 0 { time / wins as f32 } else { 0.0 };
             let avg_hp = if wins > 0 { hp_left / wins as f32 * 100.0 } else { 0.0 };
             println!("   vs {n} × {enemy:<18} victoire {rate:5.1} %   durée {avg_t:5.1} s   PV restants {avg_hp:4.0} %");
+        }
+        // Rencontres de quête (tout le groupe d'un coup, le pire cas).
+        for (label, group) in &quests {
+            let (mut wins, mut timeouts) = (0, 0);
+            for seed in 0..n_fights {
+                match fight(&h, group, seed * 7919 + 13).0 {
+                    Outcome::Victory => wins += 1,
+                    Outcome::Ongoing => timeouts += 1,
+                    _ => {}
+                }
+            }
+            let pct = |n: u32| n as f32 / n_fights as f32 * 100.0;
+            println!("   quête : {label:<28} victoire {:5.1} %   (temps écoulé {:5.1} %)", pct(wins), pct(timeouts));
         }
         println!();
     }

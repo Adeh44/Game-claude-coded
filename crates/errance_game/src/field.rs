@@ -13,7 +13,7 @@ use bevy::prelude::*;
 use errance_core::character::item_name;
 use errance_core::combat::{Combat, Controller, Event as CEvent, FighterId, Team, ZoneShape};
 use errance_core::content::content;
-use errance_core::expedition::{Decor, Layout, layout_zone, setup_combat};
+use errance_core::expedition::{Decor, Layout, layout_mission, layout_zone, setup_combat};
 use errance_core::item::Item;
 use errance_core::look::Rgb;
 use errance_core::loot::enemy_drop;
@@ -29,6 +29,8 @@ pub struct Expedition {
     pub party: Vec<u32>,
     /// Si vous êtes porteur pour une compagnie : son id.
     pub porter_for: Option<u32>,
+    /// Mission de quête : (id de la quête, étape).
+    pub quest: Option<(String, usize)>,
 }
 
 #[derive(Resource)]
@@ -59,6 +61,8 @@ pub struct Field {
     pub resources: Vec<errance_core::craft::ResourceStack>,
     /// Le héros a pris un coup cette image (interrompt la récolte).
     pub gather_hit: bool,
+    /// Mission de quête en cours (embuscade, objectif).
+    pub mission: Option<errance_core::quest::MissionRun>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -186,10 +190,19 @@ pub fn setup_field(
     mut toasts: ResMut<Toasts>,
 ) {
     let c = content();
-    let zone = c.zone(&exp.zone).unwrap_or(&c.zones[0]).clone();
+    let quest = exp.quest.as_ref().and_then(|(id, step)| c.quest(id).map(|q| (q, *step)));
+    let mission = quest.and_then(|(q, step)| q.steps.get(step).map(|s| &s.mission));
+    let zone = match mission.and_then(|m| errance_core::quest::mission_zone(c, m)) {
+        Some(z) => z,
+        None => c.zone(&exp.zone).unwrap_or(&c.zones[0]).clone(),
+    };
     let seed = game.0.rng.next_u64();
     let mut rng = Rng::new(seed);
-    let layout: Layout = layout_zone(&zone, &mut rng);
+    let layout: Layout = match mission {
+        Some(m) => layout_mission(&zone, &m.packs, &mut rng),
+        None => layout_zone(&zone, &mut rng),
+    };
+    let mission_run = quest.and_then(|(q, step)| errance_core::quest::MissionRun::new(q, step, &layout));
     let p = &mut game.0;
     let hero_spec = p.hero.fighter_spec(c, Team::Ally, Controller::Player);
     let mut party_specs = vec![];
@@ -347,6 +360,11 @@ pub fn setup_field(
         views.insert(f.id, root);
     }
     toasts.push(format!("{} — Tier {}", zone.name, zone.tier));
+    if let Some((q, step)) = quest {
+        if let Some(s) = q.steps.get(step) {
+            toasts.push(format!("Quête : {}", s.objective));
+        }
+    }
     if exp.porter_for.is_some() {
         toasts.push("Vous êtes le porteur. Suivez la compagnie, ramassez le butin, restez derrière.".to_string());
     }
@@ -374,6 +392,7 @@ pub fn setup_field(
         gathering: Default::default(),
         resources: vec![],
         gather_hit: false,
+        mission: mission_run,
     });
 }
 
@@ -529,6 +548,29 @@ pub fn step_combat(
     let mut painter = Painter { lib: &mut lib, mats: &mut mats };
     let scope = DespawnOnExit(AppState::Field);
     let hero = field.hero;
+    // Quête : l'embuscade surgit quand le héros s'avance.
+    let hero_pos = field.combat.get(hero).map(|h| h.pos);
+    let ambush = match (field.mission.as_mut(), hero_pos) {
+        (Some(m), Some(hp)) => m.check_ambush(hp),
+        _ => None,
+    };
+    if let (Some(a), Some(hp)) = (ambush, hero_pos) {
+        let names: Vec<&String> = a.enemies.iter().flat_map(|(id, n)| std::iter::repeat_n(id, *n as usize)).collect();
+        let half = field.combat.arena.half_extent.x;
+        let spots = errance_core::quest::ambush_spots(hp, names.len(), half, &mut field.rng);
+        for (id, at) in names.into_iter().zip(spots) {
+            let Some(e) = c.enemy(id) else { continue };
+            let fid = field.combat.spawn(errance_core::character::enemy_spec(c, e), at);
+            if let Some(f) = field.combat.get(fid) {
+                let root = spawn_look(&mut painter, &mut commands, &f.look, v3(f.pos, 0.0));
+                commands.entity(root).insert((FighterView(fid), scope.clone()));
+                field.views.insert(fid, root);
+                spawn_sparks(&mut commands, &mut painter, v3(at, 0.6), (0.55, 0.45, 0.3), 8);
+            }
+        }
+        toasts.push(a.line);
+        sfx.write(PlaySfx(Sfx::Boom));
+    }
     for ev in events {
         match ev {
             CEvent::Damage { dst, amount, kind, crit, src, .. } => {
@@ -681,6 +723,13 @@ pub fn step_combat(
                         if e.boss {
                             toasts.push(format!("{name} est vaincu !"));
                         }
+                        if let Some(m) = field.mission.as_mut() {
+                            let was = m.done;
+                            m.on_kill(&key);
+                            if m.done && !was {
+                                toasts.push("Objectif accompli ! Retournez au feu de camp.".into());
+                            }
+                        }
                     }
                 } else if who == hero {
                     field.end = Some(End::Defeat);
@@ -744,9 +793,17 @@ pub fn step_combat(
         }
     }
     // Zone nettoyée ?
-    if !field.cleared_announced && !field.combat.fighters.iter().any(|f| f.alive && f.team == Team::Enemy) {
+    let quiet = field.mission.as_ref().map(|m| m.quiet()).unwrap_or(true);
+    if quiet && !field.cleared_announced && !field.combat.fighters.iter().any(|f| f.alive && f.team == Team::Enemy) {
         field.cleared_announced = true;
-        if field.porter_for.is_some() {
+        let was = field.mission.as_ref().map(|m| m.done).unwrap_or(true);
+        if let Some(m) = field.mission.as_mut() {
+            m.on_cleared();
+        }
+        let now = field.mission.as_ref().map(|m| m.done).unwrap_or(true);
+        if field.mission.is_some() && now && !was {
+            toasts.push("Objectif accompli ! Retournez au feu de camp.".into());
+        } else if field.porter_for.is_some() {
             toasts.push("Le chef lève le poing : « On rentre ! Porteur, ramasse tout ! »".into());
         } else {
             toasts.push("Zone nettoyée ! Retournez au feu de camp pour rentrer.".into());
@@ -1114,6 +1171,13 @@ pub fn finish_expedition(game: &mut Game, field: &mut Field) -> Vec<String> {
         }
         _ => {
             lines.push(format!("Retour à Gué-Rouge. Ennemis vaincus : {}.", field.kills));
+            if let Some(m) = field.mission.take() {
+                match c.quest(&m.quest) {
+                    Some(q) if m.done => lines.extend(errance_core::quest::complete_step(c, p, q, m.step)),
+                    Some(q) => lines.push(format!("Quête « {} » : l'objectif n'est pas rempli. On y retournera.", q.name)),
+                    None => {}
+                }
+            }
             if field.gold > 0 {
                 lines.push(format!("+{} pièces d'or.", field.gold));
                 p.earn(field.gold);

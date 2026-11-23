@@ -38,4 +38,6 @@
 | `cargo check --target aarch64-linux-android` échoue (blake3, android-activity) | Pas de NDK ici (dl.google.com bloqué) | Vérif possible avec le backend `android-native-activity` + `CC_aarch64_linux_android=clang` + `CFLAGS_aarch64_linux_android="--target=aarch64-linux-gnu -isystem /usr/aarch64-linux-gnu/include"` (paquet `libc6-dev-arm64-cross`). Ne pas commiter le changement de backend. |
 | Bouton qui n'agit pas sur le skill | Les boutons de skill doivent réagir à l'appui | `ActivateOnPress` (`ui::instant()`) |
 | `wayland-sys` : build script échoue, pas de `target/` au démarrage | Le script d'environnement n'a pas tourné | `apt-get install` des libs (liste dans PROCHAINE_SESSION) ; miroir en 504 → boucle de 5 essais en arrière-plan |
+| `quetes.ron: Expected option` | Champ `Option<f32>` écrit `size: 24.0` | En RON une option s'écrit `Some(24.0)` |
+| Simulateur : 100 % → 0 % en ajoutant un ennemi T1 | L'IA du héros se fait encercler à 3 | Normal : régler les groupes de quête au simulateur (`quête :` en bas de chaque build) |
 | Un talent sans effet | Stat `ItemPower` jamais lue par le moteur | Utiliser des stats réellement appliquées (Armor, PhysicalPower…) |

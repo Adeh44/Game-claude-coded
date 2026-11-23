@@ -1,6 +1,6 @@
 # Référence — Errance
 
-Mis à jour : 23/11/2026 (chantier Récolte & artisanat).
+Mis à jour : 23/11/2026 (chantier Quête écrite : Gérald le Borgne).
 
 ## Le jeu en une phrase
 RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » : on arrive en haillons à Gué-Rouge, on fait des corvées, on survit aux rats, on porte la torche pour des compagnies… puis on devient très fort dans la Voie qu'on a pratiquée.
@@ -16,7 +16,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 ## Architecture (workspace Cargo)
 | Crate | Rôle |
 |---|---|
-| `crates/errance_core` | Toutes les règles, zéro Bevy. Testé (38 tests). |
+| `crates/errance_core` | Toutes les règles, zéro Bevy. Testé (53 tests). |
 | `crates/errance_core/content/*.ron` | Contenu (voies, skills, talents, objets, affixes, uniques, ennemis, zones, corvées, noms). Embarqué via `include_str!`. |
 | `crates/errance_game` | Bevy 0.20 : rendu 3D low-poly procédural, HUD tactile, menus, mini-jeux. Lib `cdylib` pour Android + bin `errance` pour PC. |
 | `crates/errance_sim` | Simulateur d'équilibrage (milliers de combats). |
@@ -34,6 +34,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - `world` : aventuriers, compagnies, rangs, traits, jours qui passent.
 - `profile` : sauvegarde (RON), sac 40 places.
 - `expedition` : plan de zone (packs, décor, boss, nœuds de récolte) et mise en place du combat.
+- `quest` : quêtes écrites (offre, étapes = missions aux monstres fixés, embuscade, récompense), `MissionRun` suit l'objectif sur le terrain.
 - `craft` : récolte (nœuds, jauge `Gathering::tick`, carcasses de bêtes) et atelier (recettes calculées, qualité selon la Forge).
 
 ### Jeu (Bevy)
@@ -46,7 +47,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - Interface dessinée pour 420 px de haut puis mise à l'échelle (`UiScale`).
 
 ## Contenu actuel (compté par le test)
-25 voies · 71 talents · 8 zones (T1 → T8) · 4 ressources (bois, minerai, peau, fibre). Le reste : voir la sortie de `cargo test -p errance_core contenu -- --nocapture`.
+25 voies · 71 talents · 8 zones (T1 → T8) · 4 ressources (bois, minerai, peau, fibre) · 1 quête écrite. Le reste : voir la sortie de `cargo test -p errance_core contenu -- --nocapture`.
 
 ## Récolte & artisanat (v0.8)
 - Nœuds par zone (`nodes:` dans `zones.ron`) : Tree → bois, Vein → minerai, Herb → fibre ; les bêtes (famille `bete`) laissent une carcasse → peau. Tier = celui de la zone (25 % un cran dessous, 7 % un cran dessus), 3 à 5 unités.
@@ -55,6 +56,15 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - Ressources : réserve à part (`Profile.resources`), pas de place au sac. Perdues si on tombe, gardées en mode porteur.
 - Atelier : recette calculée, pas écrite : ressource principale du matériau (Métal → minerai, Bois → bois, Cuir → peau, Tissu → fibre) × 12 (arme 2 mains) / 8 (arme, torse) / 6 (main secondaire) / 4 (tête, pieds, cape), + un quart en ressource d'appoint, + 1/3 de la valeur en po. Forge niv. requis = échelle des tiers. Qualité : chance +4 %/niveau de Forge. Gloire de Forge : 4 × unités × multiplicateur de tier.
 - Talents : Récolte (Bras de bûcheron, Pas du cueilleur, Coureur des bois), Forge (Bras de forgeron, Habitué des braises, Entretien).
+
+## Quêtes écrites (v0.9)
+- Contenu : `content/quetes.ron` (vérifié par `content_valide`). Avancement : `Profile.quests` (id → étape ; = nb d'étapes quand finie). Flag `quete:<id>` à la fin.
+- Une étape = une mission : la zone sert de décor (couleurs, arbres), les groupes de monstres sont écrits et tous posés (`layout_mission`), boss optionnel, embuscade optionnelle (ennemis qui surgissent en arc devant le héros quand il a parcouru `at` du chemin). Avec un boss : murs effondrés (rochers) autour de lui, brèche au sud.
+- Réussite : boss abattu, ou (sans boss) zone vidée APRÈS l'embuscade. Puis retour au feu de camp → le bilan raconte la suite. Tomber = rien de perdu côté quête, on recommence l'étape.
+- Interface : bloc « Rumeurs » en haut de la colonne droite de la taverne → panneau Quête (dialogue + Accepter) ; l'étape en cours apparaît en tête de la Porte (bord doré, tier, danger).
+- « Gérald le Borgne » (donneuse : Mère Ortie, patronne du Pichet Fêlé), dispo après 1 expédition : 1) La route du sud (Vergues, T2, taille 24) : loups, un cogneur, puis embuscade de la Fouine (lieutenant, 260 PV) + archer + va-nu-pieds ; 2) Le vieux fortin (Collines, T3, taille 28) : 4 groupes + Gérald. Récompense : 150 po, L'Œil de Gérald (unique `quest_only`, Excellente, ne tombe plus au hasard), +50 réputation Gué-Rouge.
+- Gérald n'est plus le boss des Collines Sourdes (zone sans boss désormais).
+- Simulation (IA, solo) : Recrue T2 contre l'embuscade 38 %, Mage-tank T3 100 % ; Gérald + archer : T2 0 %, T3 83 %.
 
 ## Décisions
 - Bevy (pur Rust, tout en code, Android officiel). Rejetés : Macroquad (trop bas niveau), Fyrox (mobile peu éprouvé), Godot+Rust (éditeur à clics).
@@ -73,3 +83,5 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - Bijoux, potions, repas : pas encore fabricables (alchimie, cuisine, joaillerie à venir).
 - Les panneaux laissent voir un peu la 3D (transparence plus forte que prévu, origine non trouvée).
 - Pas de ville marchable (diorama + menu).
+- Les Collines Sourdes n'ont plus de boss depuis que Gérald est réservé à la quête.
+- La réputation `gue_rouge` est stockée mais ne sert encore à rien (prix, portes, PNJ ?).

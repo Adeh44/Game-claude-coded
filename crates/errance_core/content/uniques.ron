@@ -1,6 +1,7 @@
 // Objets uniques : rares, nommés, avec un effet spécial.
 [
-    (id: "eclat_de_gerald", name: "L'Œil de Gérald", base: "grande_hache", tier: 3,
+    // Récompense de la quête « Gérald le Borgne » : ne tombe jamais au hasard.
+    (id: "eclat_de_gerald", name: "L'Œil de Gérald", base: "grande_hache", tier: 3, quest_only: true,
      lore: "La hache du Borgne. On dit qu'il voyait mieux avec elle qu'avec son œil restant.",
      mods: [(stat: CritChance, kind: Flat, value: 0.08)],
      effects: [OnKill(effect: SelfStatus(kind: Haste, duration: 4.0, magnitude: 0.4)), OnHit(tag: Some(Melee), chance: 0.15, effect: Status(kind: Bleed, duration: 4.0, magnitude: 2.0))]),

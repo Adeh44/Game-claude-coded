@@ -195,6 +195,7 @@ pub struct Content {
     pub zones: Vec<ZoneDef>,
     pub names: NameLists,
     pub resources: Vec<ResourceDef>,
+    pub quests: Vec<crate::quest::QuestDef>,
     line_idx: HashMap<String, usize>,
     skill_idx: HashMap<String, usize>,
     passive_idx: HashMap<String, usize>,
@@ -227,6 +228,7 @@ const ENEMY_FILES: &[(&str, &str)] = files!["ennemis.ron"];
 const CHORE_FILES: &[(&str, &str)] = files!["corvees.ron"];
 const ZONE_FILES: &[(&str, &str)] = files!["zones.ron"];
 const RESOURCE_FILES: &[(&str, &str)] = files!["ressources.ron"];
+const QUEST_FILES: &[(&str, &str)] = files!["quetes.ron"];
 const NAMES: &str = include_str!("../content/noms.ron");
 
 fn parse_all<T: for<'de> Deserialize<'de>>(files: &[(&str, &str)], errors: &mut Vec<String>) -> Vec<T> {
@@ -264,6 +266,7 @@ impl Content {
         let chores: Vec<ChoreDef> = parse_all(CHORE_FILES, &mut errors);
         let zones: Vec<ZoneDef> = parse_all(ZONE_FILES, &mut errors);
         let resources: Vec<ResourceDef> = parse_all(RESOURCE_FILES, &mut errors);
+        let quests: Vec<crate::quest::QuestDef> = parse_all(QUEST_FILES, &mut errors);
         let names = match ron::from_str::<NameLists>(NAMES) {
             Ok(n) => n,
             Err(e) => {
@@ -290,6 +293,7 @@ impl Content {
             zones,
             names,
             resources,
+            quests,
             line_idx,
             skill_idx,
             passive_idx,
@@ -338,6 +342,9 @@ impl Content {
             if b.min_tier < 1 || b.max_tier > 8 || b.min_tier > b.max_tier {
                 e.push(format!("objet {} : tiers invalides", b.id));
             }
+        }
+        for q in &self.quests {
+            e.extend(crate::quest::validate(self, q));
         }
         for u in &self.uniques {
             if self.base(&u.base).is_none() {
@@ -441,6 +448,10 @@ impl Content {
         self.resources.iter().find(|r| r.node == kind)
     }
 
+    pub fn quest(&self, id: &str) -> Option<&crate::quest::QuestDef> {
+        self.quests.iter().find(|q| q.id == id)
+    }
+
     pub fn chore(&self, id: &str) -> Option<&ChoreDef> {
         self.chores.iter().find(|c| c.id == id)
     }
@@ -479,9 +490,9 @@ mod tests {
         let (c, errors) = Content::load();
         assert!(errors.is_empty(), "Problèmes dans le contenu :\n{}", errors.join("\n"));
         println!(
-            "voies {} · skills {} · talents {} · objets {} · affixes {} · uniques {} · ennemis {} · corvées {} · zones {} · ressources {}",
+            "voies {} · skills {} · talents {} · objets {} · affixes {} · uniques {} · ennemis {} · corvées {} · zones {} · ressources {} · quêtes {}",
             c.lines.len(), c.skills.len(), c.passives.len(), c.bases.len(), c.affixes.len(),
-            c.uniques.len(), c.enemies.len(), c.chores.len(), c.zones.len(), c.resources.len()
+            c.uniques.len(), c.enemies.len(), c.chores.len(), c.zones.len(), c.resources.len(), c.quests.len()
         );
         assert!(c.skills.len() > 100);
         assert!(c.bases.len() > 40);

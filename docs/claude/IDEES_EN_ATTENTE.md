@@ -6,7 +6,9 @@ Rien n'est coupé : tout attend son tour.
 - Outils de récolte (hache, pioche, couteau) avec leur tier, comme dans Albion.
 - Raffinage (minerai → lingots) entre récolte et forge.
 - Animation du héros qui frappe pendant la récolte.
-- Quêtes écrites (personnages marquants, choix moraux).
+- Quêtes écrites suite : d'autres quêtes avec choix moraux (épargner Gérald qui supplie ? rendre le grain aux cochers ou le revendre ?), PNJ donneurs ailleurs qu'à la taverne, journal de quêtes dans la Fiche.
+- Un nouveau boss pour les Collines Sourdes (Gérald est réservé à la quête).
+- La réputation de Gué-Rouge (gagnée par la quête) : remises au marché, gardes plus aimables, accès à des quêtes de la ville.
 - Région des montagnes enneigées avec passages d'escalade (mini-jeu de prises, gestion du froid et de la corde).
 - QG / camp de sa propre compagnie (améliorations, recrues débutantes qui portent TES torches).
 - Montures.

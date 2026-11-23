@@ -26,7 +26,7 @@
      nodes: [(Tree, 8), (Vein, 3), (Herb, 4)],
      pack_count: 7),
     (id: "collines", name: "Les Collines Sourdes", tier: 3,
-     description: "Des collines rocailleuses, des ruines, des morts qui ne restent pas couchés. Le repaire de Gérald le Borgne.",
+     description: "Des collines rocailleuses, des ruines, des morts qui ne restent pas couchés. Quelque part, un vieux fortin.",
      ground: (0.5, 0.48, 0.33), foliage: (0.45, 0.45, 0.25), rock: (0.55, 0.52, 0.45), trees: 0.4, tree_kind: "mort",
      sky: (0.75, 0.7, 0.6),
      packs: [
@@ -36,7 +36,7 @@
         (enemies: [("brigand_cogneur", 2), ("brigand_archer", 1)], weight: 1.5),
      ],
      nodes: [(Tree, 2), (Vein, 7), (Herb, 3)],
-     pack_count: 6, boss: Some("gerald_le_borgne")),
+     pack_count: 6),
     (id: "morne_eau", name: "Les Marais de Morne-Eau", tier: 4,
      description: "Brume, eau noire, trolls qui se régénèrent. Venez avec du feu.",
      ground: (0.3, 0.36, 0.25), foliage: (0.3, 0.38, 0.2), rock: (0.35, 0.38, 0.33), trees: 0.9, tree_kind: "saule",

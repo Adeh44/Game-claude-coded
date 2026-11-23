@@ -378,6 +378,9 @@ pub struct UniqueDef {
     /// Effets spéciaux, actifs quand l'objet est porté.
     pub effects: Vec<PassiveEffect>,
     pub lore: String,
+    /// Récompense de quête : ne tombe jamais sur un monstre.
+    #[serde(default)]
+    pub quest_only: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

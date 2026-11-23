@@ -70,7 +70,7 @@ pub fn enemy_drop(c: &Content, rng: &mut Rng, e: &EnemyDef, next_uid: &mut u64) 
     }
     // Les boss ont une chance de lâcher un unique de leur tier.
     if e.boss && rng.chance(0.35) {
-        let uniques: Vec<_> = c.uniques.iter().filter(|u| u.tier <= e.tier).collect();
+        let uniques: Vec<_> = c.uniques.iter().filter(|u| u.tier <= e.tier && !u.quest_only).collect();
         if let Some(u) = rng.pick(&uniques) {
             *next_uid += 1;
             let mut it = Item::new(*next_uid, &u.base, u.tier);

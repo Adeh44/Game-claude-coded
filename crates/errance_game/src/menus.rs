@@ -103,7 +103,7 @@ fn menu_actions(
                     }
                 }
                 ov.0 = match &ov.0 {
-                    Some(Panel::Npc(_)) | Some(Panel::Company(_)) => Some(Panel::Tavern),
+                    Some(Panel::Npc(_)) | Some(Panel::Company(_)) | Some(Panel::Quest(_)) => Some(Panel::Tavern),
                     Some(Panel::Chore(_)) => Some(Panel::Chores),
                     _ => None,
                 };
@@ -192,9 +192,27 @@ fn menu_actions(
             UiAction::SelectLine(l) => menu.line = Some(l),
             UiAction::Travel(zone) => {
                 let party = game.0.world.party().iter().map(|n| n.id).collect();
-                commands.insert_resource(crate::field::Expedition { zone, party, porter_for: None });
+                commands.insert_resource(crate::field::Expedition { zone, party, porter_for: None, quest: None });
                 ov.0 = None;
                 next.set(AppState::Field);
+            }
+            UiAction::OpenQuest(id) => ov.0 = Some(Panel::Quest(id)),
+            UiAction::AcceptQuest(id) => {
+                if let Some(q) = c.quest(&id) {
+                    if errance_core::quest::accept(&mut game.0, q) {
+                        toasts.push(format!("Quête acceptée : {}", q.name));
+                    }
+                }
+            }
+            UiAction::QuestTravel(id) => {
+                let step = c.quest(&id).map(|q| errance_core::quest::status(&game.0, q));
+                if let (Some(q), Some(errance_core::quest::QuestStatus::Active(n))) = (c.quest(&id), step) {
+                    let zone = q.steps[n].mission.zone.clone();
+                    let party = game.0.world.party().iter().map(|n| n.id).collect();
+                    commands.insert_resource(crate::field::Expedition { zone, party, porter_for: None, quest: Some((id, n)) });
+                    ov.0 = None;
+                    next.set(AppState::Field);
+                }
             }
             UiAction::InspectNpc(id) => {
                 ov.0 = Some(Panel::Npc(id));
@@ -258,7 +276,7 @@ fn menu_actions(
             UiAction::JoinCompany(cid) => {
                 let tier = game.0.world.company(cid).and_then(|co| game.0.world.npc(co.leader)).map(|l| l.sheet.power_tier()).unwrap_or(2);
                 let zone = c.zones.iter().filter(|z| z.tier <= tier.max(2)).max_by_key(|z| z.tier).map(|z| z.id.clone()).unwrap_or_else(|| "marches".into());
-                commands.insert_resource(crate::field::Expedition { zone, party: vec![], porter_for: Some(cid) });
+                commands.insert_resource(crate::field::Expedition { zone, party: vec![], porter_for: Some(cid), quest: None });
                 ov.0 = None;
                 next.set(AppState::Field);
             }
@@ -400,6 +418,7 @@ fn rebuild_panel(
         Panel::Company(_) => "Compagnie".into(),
         Panel::Intro => "Gué-Rouge".into(),
         Panel::Workshop => "Atelier du forgeron".into(),
+        Panel::Quest(id) => content().quest(id).map(|q| q.name.clone()).unwrap_or_default(),
     };
     let close_label = match panel {
         Panel::Summary => "Retour en ville",
@@ -445,6 +464,7 @@ fn rebuild_panel(
         Panel::Company(id) => build_company(&mut commands, body, &fonts, p, id),
         Panel::Intro => build_intro(&mut commands, body, &fonts),
         Panel::Workshop => crate::workshop::build_workshop(&mut commands, body, &fonts, p, &menu),
+        Panel::Quest(id) => build_quest(&mut commands, body, &fonts, p, &id),
     }
 }
 
@@ -833,6 +853,7 @@ fn build_tavern(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &erranc
             }
         });
         b.spawn(scroll_col(Val::Auto)).insert(Node { flex_grow: 1.0, flex_direction: FlexDirection::Column, row_gap: px(4), overflow: Overflow::scroll_y(), ..default() }).with_children(|col| {
+            build_rumors(col, fonts, p);
             col.spawn(ui::bold(fonts, "Compagnies (elles cherchent toujours des porteurs)", 13.0, pal::INK));
             for co in &p.world.companies {
                 let rep = p.reputation.get(&format!("co:{}", co.id)).copied().unwrap_or(0);
@@ -859,6 +880,61 @@ fn build_tavern(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &erranc
                     r.spawn(ui::button(fonts, "Voir", UiAction::InspectNpc(n.id), px(50), 11.0));
                     r.spawn(ui::button(fonts, "Renvoyer", UiAction::Dismiss(n.id), px(80), 11.0));
                 });
+            }
+        });
+    });
+}
+
+/// Bloc « Rumeurs » de la taverne : les quêtes écrites.
+fn build_rumors(col: &mut ChildSpawnerCommands, fonts: &Fonts, p: &errance_core::profile::Profile) {
+    use errance_core::quest::{QuestStatus, status};
+    let c = content();
+    let mut any = false;
+    for q in &c.quests {
+        let st = status(p, q);
+        if st == QuestStatus::Locked {
+            continue;
+        }
+        if !any {
+            col.spawn(ui::bold(fonts, "Rumeurs", 13.0, pal::INK));
+            any = true;
+        }
+        let text = match st {
+            QuestStatus::Offered => format!("(!) {}", q.hook),
+            QuestStatus::Active(n) => format!("{} — {}", q.name, q.steps[n].objective),
+            _ => format!("{} — terminée.", q.name),
+        };
+        col.spawn(ui::button(fonts, text, UiAction::OpenQuest(q.id.clone()), percent(100), 11.0));
+    }
+}
+
+/// Dialogue d'une quête : l'offre, l'étape en cours ou l'épilogue.
+fn build_quest(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_core::profile::Profile, id: &str) {
+    use errance_core::quest::{QuestStatus, status};
+    let c = content();
+    let Some(q) = c.quest(id) else { return };
+    let st = status(p, q);
+    commands.entity(body).with_children(|b| {
+        b.spawn(scroll_col(percent(100))).with_children(|col| {
+            col.spawn(ui::label(fonts, q.giver.clone(), 12.0, pal::DIM));
+            let lines: Vec<String> = match st {
+                QuestStatus::Locked | QuestStatus::Offered => q.offer.clone(),
+                QuestStatus::Active(n) => {
+                    let s = &q.steps[n];
+                    let mut v = if s.intro.is_empty() { q.offer.clone() } else { s.intro.clone() };
+                    v.push(format!("Étape {} / {} — {} : {}", n + 1, q.steps.len(), s.title, s.objective));
+                    v.push("Partez depuis la Porte de la ville.".into());
+                    v
+                }
+                QuestStatus::Done => q.epilogue.clone(),
+            };
+            for l in lines {
+                col.spawn(ui::label(fonts, l, 12.5, pal::INK));
+            }
+            if st == QuestStatus::Offered {
+                let tier = q.step_tier(c, 0);
+                col.spawn(ui::label(fonts, format!("Première étape : Tier {tier}. Récompense promise : {} po et un objet unique.", q.reward.gold), 11.0, pal::DIM));
+                col.spawn(ui::button(fonts, "Accepter", UiAction::AcceptQuest(q.id.clone()), px(160), 13.0));
             }
         });
     });
@@ -910,6 +986,31 @@ fn build_gate(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_
     let c = content();
     commands.entity(body).with_children(|b| {
         b.spawn(scroll_col(px(460))).with_children(|col| {
+            for q in &c.quests {
+                let errance_core::quest::QuestStatus::Active(n) = errance_core::quest::status(p, q) else { continue };
+                let s = &q.steps[n];
+                let tier = q.step_tier(c, n);
+                let danger = (tier as i32 - p.hero.power_tier() as i32).max(0);
+                let warn = if danger >= 2 { " — mortel pour vous" } else if danger == 1 { " — dangereux" } else { "" };
+                col.spawn((
+                    Button,
+                    UiAction::QuestTravel(q.id.clone()),
+                    ButtonLook { normal: pal::PANEL_LIGHT, pressed: pal::BUTTON_ON },
+                    Node {
+                        padding: UiRect::all(px(6)),
+                        border_radius: BorderRadius::all(px(5)),
+                        border: UiRect::all(px(1)),
+                        flex_direction: FlexDirection::Column,
+                        ..default()
+                    },
+                    BorderColor::all(pal::GOLD),
+                    BackgroundColor(pal::PANEL_LIGHT),
+                    children![
+                        (Text::new(format!("Quête : {} — Tier {tier}{warn}", s.title)), font(&fonts.bold, 13.0), TextColor(pal::GOLD)),
+                        (Text::new(s.objective.clone()), font(&fonts.regular, 11.0), TextColor(pal::DIM)),
+                    ],
+                ));
+            }
             for z in &c.zones {
                 let danger = (z.tier as i32 - p.hero.power_tier() as i32).max(0);
                 let warn = match danger {
