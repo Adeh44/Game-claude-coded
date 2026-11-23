@@ -16,6 +16,9 @@ path = "src/main.rs"
 [dependencies]
 errance_core.workspace = true
 bevy = { workspace = true, features = ["3d", "ui", "audio", "wav"] }
+# OpenGL ES en plus de Vulkan : certains pilotes Vulkan de téléphones (Redmi)
+# refusent des allocations dont Bevy a besoin. Choix du moteur : save::backend().
+wgpu = { version = "30", default-features = false, features = ["gles", "vulkan"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 bevy = { workspace = true, features = ["3d", "ui", "audio", "wav", "android-game-activity"] }

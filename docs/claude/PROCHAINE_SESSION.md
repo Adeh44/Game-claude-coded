@@ -7,7 +7,8 @@
 - `demo_driver` tourne maintenant en PreUpdate (sinon ses actions étaient perdues, voir METHODE).
 - Le script d'environnement n'avait encore PAS tourné : libs installées à la main (liste ci-dessous), build Bevy ~21 min.
 - Libs : `libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libxkbcommon-x11-0 xvfb xdotool imagemagick pkg-config mesa-vulkan-drivers libgl1-mesa-dri` (miroir Ubuntu parfois en 504 : boucle de réessais).
-- 23/11 : premier test d'Adeh sur téléphone (Redmi, Android 16) : plantage quelques secondes après « Nouvelle partie ». La boîte noire a donné la cause : bug wgpu-hal + pilote Vulkan (`ERROR_FRAGMENTED_POOL`). Corrigé par un wgpu-hal patché dans `vendor/` (voir METHODE). À confirmer par Adeh sur le téléphone.
+- 23/11 : premier test d'Adeh sur téléphone (Redmi, Android 16). 1) Plantage après « Nouvelle partie » : bug wgpu-hal + pilote Vulkan (`ERROR_FRAGMENTED_POOL`), patch dans `vendor/wgpu-hal`. 2) Ensuite plus de plantage mais la 3D ne s'affichait pas (écran jamais effacé). Android passe donc par défaut sur OpenGL ES (bouton « Moteur graphique » sur le titre, garde-fou au démarrage). À confirmer par Adeh.
+- Adeh pensait pouvoir marcher en ville : la ville est un diorama + menu (idée « ville marchable » en attente). Il l'a remarqué tout de suite : à remonter dans les priorités ?
 - À tester ensuite : le panneau d'escalade au doigt (taille des prises, lisibilité).
 
 ## Consignes d'Adeh (valables jusqu'à nouvel ordre)

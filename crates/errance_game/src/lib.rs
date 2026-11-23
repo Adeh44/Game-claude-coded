@@ -81,6 +81,7 @@ struct ToastBox;
 #[bevy_main]
 pub fn main() {
     save::install_panic_hook();
+    save::startup_guard();
     let window = Window {
         title: "Errance".into(),
         #[cfg(target_os = "android")]
@@ -90,7 +91,7 @@ pub fn main() {
         ..default()
     };
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin { primary_window: Some(window), ..default() }))
+        .add_plugins(DefaultPlugins.set(WindowPlugin { primary_window: Some(window), ..default() }).set(render_plugin()))
         .insert_resource(ClearColor(Color::srgb(0.08, 0.07, 0.06)))
         .insert_resource(GlobalAmbientLight { brightness: 420.0, ..default() })
         .init_state::<AppState>()
@@ -119,14 +120,28 @@ fn setup_ui_camera(mut commands: Commands) {
     ));
 }
 
+/// Le moteur graphique choisi (OpenGL ES ou Vulkan), lu au lancement.
+fn render_plugin() -> bevy::render::RenderPlugin {
+    use bevy::render::settings::{Backends, WgpuSettings};
+    let mut s = WgpuSettings::default();
+    match save::backend().as_str() {
+        "gl" => s.backends = Some(Backends::GL),
+        "vulkan" => s.backends = Some(Backends::VULKAN),
+        _ => {}
+    }
+    bevy::render::RenderPlugin { render_creation: s.into(), ..default() }
+}
+
 #[derive(Component)]
 struct TitleScreen;
+
+#[derive(Component)]
+struct BackendLabel;
 
 fn build_title(mut commands: Commands, fonts: Res<Fonts>, mut report: Local<Option<Option<String>>>) {
     let has_save = save::load().is_some();
     // Le rapport du dernier plantage n'est lu qu'une fois (au lancement).
     let crash = report.get_or_insert_with(save::take_crash_report).clone();
-    save::mark("titre");
     commands
         .spawn((
             Node {
@@ -152,6 +167,14 @@ fn build_title(mut commands: Commands, fonts: Res<Fonts>, mut report: Local<Opti
             p.spawn(ui::button(&fonts, "Nouvelle partie", UiAction::NewGame, px(220), 15.0));
             p.spawn(Node { height: px(18), ..default() });
             p.spawn(ui::label(&fonts, "Joystick à gauche · skills à droite · tenez le téléphone à l'horizontale", 11.0, pal::DIM));
+            p.spawn((
+                bevy::ui_widgets::Button,
+                UiAction::ToggleBackend,
+                ui::ButtonLook { normal: pal::PANEL_LIGHT, pressed: pal::BUTTON_ON },
+                Node { padding: UiRect::axes(px(8), px(3)), border_radius: BorderRadius::all(px(4)), ..default() },
+                BackgroundColor(pal::PANEL_LIGHT),
+                children![(Text::new(format!("Moteur graphique : {} (toucher pour changer)", save::backend_label(&save::backend()))), ui::font(&fonts.regular, 10.0), TextColor(pal::DIM), BackendLabel)],
+            ));
             if let Some(c) = &crash {
                 p.spawn((
                     Node { max_width: px(620), margin: UiRect::top(px(10)), padding: UiRect::all(px(6)), border: UiRect::all(px(1)), border_radius: BorderRadius::all(px(5)), ..default() },
@@ -163,9 +186,15 @@ fn build_title(mut commands: Commands, fonts: Res<Fonts>, mut report: Local<Opti
         });
 }
 
-fn title_actions(mut commands: Commands, mut queue: ResMut<UiQueue>, mut next: ResMut<NextState<AppState>>) {
+fn title_actions(mut commands: Commands, mut queue: ResMut<UiQueue>, mut next: ResMut<NextState<AppState>>, mut label: Query<&mut Text, With<BackendLabel>>) {
     for a in queue.take() {
         match a {
+            UiAction::ToggleBackend => {
+                let b = save::toggle_backend();
+                if let Ok(mut t) = label.single_mut() {
+                    **t = format!("Moteur graphique : {} — fermez et relancez le jeu pour l'appliquer", save::backend_label(&b));
+                }
+            }
             UiAction::NewGame => {
                 let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos() as u64).unwrap_or(7);
                 let p = Profile::new_game(content(), "Vous", seed);
@@ -356,6 +385,15 @@ fn demo_driver(
             }
         }
     }
+    // chore:<id>:paid : après la corvée, toucher la paie, fermer, puis ouvrir le marché.
+    if parts.first() == Some(&"chore") && parts.contains(&"paid") {
+        match *frame {
+            20 => queue.0.push(UiAction::ChoreTap(102)),
+            24 => queue.0.push(UiAction::Close),
+            28 => queue.0.push(UiAction::Building("marche".into())),
+            _ => {}
+        }
+    }
     // En expédition : le héros est piloté par l'IA (pour les captures).
     if let Some(mut f) = field {
         if parts.contains(&"brawl") && *frame == 12 {
@@ -445,7 +483,14 @@ fn breadcrumbs(state: Res<State<AppState>>, ov: Res<Overlay>, time: Res<Time>, m
     }
     since.1 += time.delta_secs();
     let place = match st {
-        AppState::Title => return,
+        // « titre » seulement une fois des images réellement affichées
+        // (sinon le garde-fou du moteur graphique ne verrait pas le plantage).
+        AppState::Title => {
+            if since.1 > 1.5 {
+                save::mark("titre");
+            }
+            return;
+        }
         AppState::Town => "ville",
         AppState::Field => "expédition",
     };

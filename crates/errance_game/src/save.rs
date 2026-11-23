@@ -39,12 +39,68 @@ pub fn save(p: &Profile) {
 }
 
 // ------------------------------------------------------------------
+// Moteur graphique (choisi au lancement) : OpenGL ES ou Vulkan.
+// ------------------------------------------------------------------
+
+/// "gl" ou "vulkan". Par défaut : OpenGL sur Android (le Vulkan du Redmi
+/// d'Adeh n'affichait pas la 3D), Vulkan ailleurs.
+pub fn backend() -> String {
+    if let Some(s) = black_box("moteur.txt").and_then(|p| std::fs::read_to_string(p).ok()) {
+        let s = s.trim();
+        if s == "gl" || s == "vulkan" {
+            return s.to_string();
+        }
+    }
+    if cfg!(target_os = "android") { "gl".into() } else { "auto".into() }
+}
+
+/// Bascule le moteur (pris en compte au prochain lancement). Renvoie le nouveau.
+pub fn toggle_backend() -> String {
+    let next = if backend() == "gl" { "vulkan" } else { "gl" };
+    if let Some(p) = black_box("moteur.txt") {
+        if let Some(d) = p.parent() {
+            let _ = std::fs::create_dir_all(d);
+        }
+        let _ = std::fs::write(p, next);
+    }
+    next.to_string()
+}
+
+/// Garde-fou : si le lancement précédent n'a jamais atteint l'écran titre
+/// (plantage du moteur graphique au démarrage), on change de moteur tout seul.
+pub fn startup_guard() {
+    let last = black_box("etape.txt").and_then(|p| std::fs::read_to_string(p).ok());
+    if let Ok(mut prev) = PREV_STEP.lock() {
+        *prev = last.clone();
+    }
+    if last.as_deref() == Some("démarrage") {
+        let b = toggle_backend();
+        if let Some(p) = black_box("plantage.txt") {
+            let old = std::fs::read_to_string(&p).unwrap_or_default();
+            let msg = format!("{old}\nLe jeu n'arrivait pas à démarrer : moteur graphique changé pour {}.", backend_label(&b));
+            let _ = std::fs::write(p, msg.trim());
+        }
+    }
+    mark("démarrage");
+}
+
+pub fn backend_label(b: &str) -> &'static str {
+    match b {
+        "gl" => "OpenGL ES",
+        "vulkan" => "Vulkan",
+        _ => "automatique",
+    }
+}
+
+// ------------------------------------------------------------------
 // Boîte noire : en cas de plantage sur le téléphone, on garde une trace
 // (message de panique Rust + dernière étape atteinte) pour l'afficher au
 // prochain lancement sur l'écran titre.
 // ------------------------------------------------------------------
 
 static STEP: std::sync::Mutex<String> = std::sync::Mutex::new(String::new());
+/// L'étape où en était le lancement précédent (lue par `startup_guard`).
+static PREV_STEP: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
 fn black_box(name: &str) -> Option<PathBuf> {
     dir().map(|d| d.join(name))
@@ -91,7 +147,7 @@ pub fn take_crash_report() -> Option<String> {
         let _ = std::fs::remove_file(p);
         s
     });
-    let step = black_box("etape.txt").and_then(|p| std::fs::read_to_string(p).ok());
+    let step = PREV_STEP.lock().ok().and_then(|s| s.clone());
     if let Some(m) = panic {
         return Some(format!("Le jeu a planté la dernière fois : {m}"));
     }

@@ -103,6 +103,8 @@ pub enum UiAction {
     CraftSelect(String),
     Craft(String, u8),
     SellResource(usize),
+    // Titre
+    ToggleBackend,
     // Escalade
     ClimbPrompt,
     ClimbHold(u32),
