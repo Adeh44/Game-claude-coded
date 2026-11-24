@@ -42,8 +42,8 @@ pub fn save(p: &Profile) {
 // Moteur graphique (choisi au lancement) : OpenGL ES ou Vulkan.
 // ------------------------------------------------------------------
 
-/// "gl" ou "vulkan". Par défaut : OpenGL sur Android (le Vulkan du Redmi
-/// d'Adeh n'affichait pas la 3D), Vulkan ailleurs.
+/// "gl" ou "vulkan". Par défaut : choix automatique (Vulkan sur Android ;
+/// OpenGL plantait au démarrage sur le Redmi d'Adeh).
 pub fn backend() -> String {
     if let Some(s) = black_box("moteur.txt").and_then(|p| std::fs::read_to_string(p).ok()) {
         let s = s.trim();
@@ -51,7 +51,7 @@ pub fn backend() -> String {
             return s.to_string();
         }
     }
-    if cfg!(target_os = "android") { "gl".into() } else { "auto".into() }
+    "auto".into()
 }
 
 /// Bascule le moteur (pris en compte au prochain lancement). Renvoie le nouveau.

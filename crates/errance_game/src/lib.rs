@@ -122,8 +122,17 @@ fn setup_ui_camera(mut commands: Commands) {
 
 /// Le moteur graphique choisi (OpenGL ES ou Vulkan), lu au lancement.
 fn render_plugin() -> bevy::render::RenderPlugin {
-    use bevy::render::settings::{Backends, WgpuSettings};
+    use bevy::render::settings::{Backends, WgpuFeatures, WgpuSettings};
     let mut s = WgpuSettings::default();
+    // Pas de matériaux « bindless » (tableaux de textures) : sur le Redmi
+    // d'Adeh, le pilote Vulkan refuse ces allocations et la 3D ne s'affiche
+    // pas. Le chemin classique marche partout et suffit pour notre scène.
+    s.disabled_features = Some(
+        WgpuFeatures::TEXTURE_BINDING_ARRAY
+            | WgpuFeatures::BUFFER_BINDING_ARRAY
+            | WgpuFeatures::STORAGE_RESOURCE_BINDING_ARRAY
+            | WgpuFeatures::PARTIALLY_BOUND_BINDING_ARRAY,
+    );
     match save::backend().as_str() {
         "gl" => s.backends = Some(Backends::GL),
         "vulkan" => s.backends = Some(Backends::VULKAN),
