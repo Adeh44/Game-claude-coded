@@ -19,6 +19,9 @@ bevy = { workspace = true, features = ["3d", "ui", "audio", "wav"] }
 # OpenGL ES en plus de Vulkan : certains pilotes Vulkan de téléphones (Redmi)
 # refusent des allocations dont Bevy a besoin. Choix du moteur : save::backend().
 wgpu = { version = "30", default-features = false, features = ["gles", "vulkan"] }
+# Journal du moteur affiché dans le jeu (journal.rs).
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false }
 
 [target.'cfg(target_os = "android")'.dependencies]
 bevy = { workspace = true, features = ["3d", "ui", "audio", "wav", "android-game-activity"] }

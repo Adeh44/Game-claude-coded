@@ -5,6 +5,7 @@ pub mod audio;
 pub mod climb;
 pub mod field;
 pub mod gather;
+pub mod journal;
 pub mod hud;
 pub mod menus;
 pub mod minigames;
@@ -91,13 +92,13 @@ pub fn main() {
         ..default()
     };
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin { primary_window: Some(window), ..default() }).set(render_plugin()))
+        .add_plugins(DefaultPlugins.set(WindowPlugin { primary_window: Some(window), ..default() }).set(render_plugin()).set(bevy::log::LogPlugin { custom_layer: journal::layer, ..default() }))
         .insert_resource(ClearColor(Color::srgb(0.08, 0.07, 0.06)))
         .insert_resource(GlobalAmbientLight { brightness: 420.0, ..default() })
         .init_state::<AppState>()
         .init_resource::<Overlay>()
         .init_resource::<Toasts>()
-        .add_plugins((audio::AudioPlugin, ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin, gather::GatherPlugin, climb::ClimbPlugin))
+        .add_plugins((audio::AudioPlugin, ui::UiPlugin, field::FieldPlugin, hud::HudPlugin, town::TownPlugin, menus::MenusPlugin, minigames::MiniGamesPlugin, gather::GatherPlugin, climb::ClimbPlugin, journal::JournalPlugin))
         .add_systems(Startup, (setup_lib, setup_ui_camera))
         .add_systems(OnEnter(AppState::Title), build_title)
         .add_systems(Update, (title_actions.run_if(in_state(AppState::Title)), show_toasts, auto_screenshot, save::autosave))

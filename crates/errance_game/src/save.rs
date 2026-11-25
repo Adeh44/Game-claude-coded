@@ -106,6 +106,16 @@ fn black_box(name: &str) -> Option<PathBuf> {
     dir().map(|d| d.join(name))
 }
 
+/// Journal du moteur (erreurs Bevy / wgpu), réécrit à chaque nouvelle ligne.
+pub fn write_journal(s: &str) {
+    if let Some(p) = black_box("journal.txt") {
+        if let Some(d) = p.parent() {
+            let _ = std::fs::create_dir_all(d);
+        }
+        let _ = std::fs::write(p, s);
+    }
+}
+
 /// Note l'étape en cours (écrite sur disque : survit à un plantage du pilote).
 pub fn mark(step: &str) {
     if let Ok(mut s) = STEP.lock() {

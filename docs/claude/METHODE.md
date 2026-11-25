@@ -23,6 +23,7 @@
 ## Boîte noire (plantages sur le téléphone)
 - Une panique Rust est écrite dans `plantage.txt` (message, fichier:ligne, fil, étape) ; l'étape en cours est notée dans `etape.txt` (dossier de sauvegarde). Au lancement suivant, l'écran titre affiche le rapport en rouge : Adeh n'a qu'à faire une capture.
 - Test sur PC : `ERRANCE_SAVE_DIR=dossier ERRANCE_TEST_PANIC=1` (panique en ville après 4 s), puis relancer.
+- Journal du moteur : `journal.rs` capte erreurs / alertes Bevy-wgpu + la fiche du GPU, les écrit dans `journal.txt` et les affiche en petit en bas à gauche de l'écran (toujours visible pour l'instant : à masquer une fois le téléphone d'Adeh réglé).
 - Clics réels : `play.sh` doit faire `mousedown`, pause 0,6 s, `mouseup` (un `click` est trop rapide pour le rendu logiciel). Bouton « Nouvelle partie » à (640, 380) en 1280×640.
 
 ## Routine git

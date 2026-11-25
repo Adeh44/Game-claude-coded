@@ -2589,6 +2589,8 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "errance_core",
+ "tracing",
+ "tracing-subscriber",
  "wgpu",
 ]
 
