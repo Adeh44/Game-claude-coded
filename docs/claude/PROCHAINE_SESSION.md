@@ -15,6 +15,7 @@
 - Travailler jusqu'à ce qu'Adeh dise qu'il est revenu.
 - Un fil par chantier (~45-60 min). En fin de chantier : docs → commit → push → `create_session` du fil suivant (même environnement `env_012MCygdvnM7WLQmJSPkCmzt`, même dépôt, même branche) avec le prompt de relais mis à jour, puis s'arrêter.
 - Ne jamais attendre une durée annoncée : lancer en arrière-plan et vérifier toutes les minutes.
+- Durée de la CI (APK publié) mesurée sur 13 constructions : 5 à 7 min si les dépendances n'ont pas changé, 8 à 11 min si Cargo.toml / Cargo.lock ont bougé (cache Rust à refaire). Les tests seuls : ~35 s. Réflexe : attendre 5 min, puis vérifier chaque minute.
 - Quand Adeh revient : finir l'étape en cours, récap (négatif d'abord, bonnes surprises détaillées, quoi tester, mini-leçon Rust), commit, push.
 
 ## Programme (chantiers dans l'ordre)
