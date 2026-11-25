@@ -331,7 +331,7 @@ pub fn setup_field(
             falloff: FogFalloff::Linear { start: 22.0, end: 48.0 },
             ..default()
         },
-        #[cfg(target_os = "android")]
+        // MSAA coupé partout, comme la caméra de l'interface (voir setup_ui_camera).
         Msaa::Off,
         scope.clone(),
     ));

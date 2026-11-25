@@ -119,6 +119,10 @@ fn setup_ui_camera(mut commands: Commands) {
         Camera2d,
         Camera { order: 10, clear_color: ClearColorConfig::None, ..default() },
         IsDefaultUiCamera,
+        // Même MSAA que les caméras 3D (coupé sur Android) : avec des réglages
+        // différents, Bevy dessine l'interface sur une autre toile et, sur le
+        // Mali du Redmi d'Adeh, elle recouvrait toute la 3D.
+        Msaa::Off,
     ));
 }
 

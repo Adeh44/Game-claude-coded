@@ -116,7 +116,7 @@ fn build_town_scene(mut commands: Commands, mut lib: ResMut<Lib>, mut mats: ResM
         TownCamera,
         Projection::Perspective(PerspectiveProjection { fov: 40f32.to_radians(), ..default() }),
         Transform::from_xyz(0.0, 12.0, 16.0).looking_at(Vec3::ZERO, Vec3::Y),
-        #[cfg(target_os = "android")]
+        // MSAA coupé partout, comme la caméra de l'interface (voir setup_ui_camera).
         Msaa::Off,
         scope,
     ));
