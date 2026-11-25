@@ -14,7 +14,7 @@
 ## Consignes d'Adeh (valables jusqu'à nouvel ordre)
 - Travailler jusqu'à ce qu'Adeh dise qu'il est revenu.
 - Un fil par chantier (~45-60 min). En fin de chantier : docs → commit → push → `create_session` du fil suivant (même environnement `env_012MCygdvnM7WLQmJSPkCmzt`, même dépôt, même branche) avec le prompt de relais mis à jour, puis s'arrêter.
-- Ne jamais attendre une durée annoncée : lancer en arrière-plan et vérifier toutes les 2 minutes.
+- Ne jamais attendre une durée annoncée : lancer en arrière-plan et vérifier toutes les minutes.
 - Quand Adeh revient : finir l'étape en cours, récap (négatif d'abord, bonnes surprises détaillées, quoi tester, mini-leçon Rust), commit, push.
 
 ## Programme (chantiers dans l'ordre)
@@ -38,7 +38,7 @@
 ## Prompt de relais (à coller ou envoyé par create_session)
 ```
 On reprend Errance (RPG mobile Rust/Bevy, dépôt Adeh44/Game-claude-coded, branche claude/mobile-rpg-game-design-o55gg9). Tu as l'autorisation de commit et push sur cette branche.
-Lis dans l'ordre : CLAUDE.md, docs/claude/METHODE.md, docs/claude/REFERENCE.md, docs/claude/IDEES_EN_ATTENTE.md, docs/claude/PROCHAINE_SESSION.md, et applique les « Consignes d'Adeh » (un fil par chantier, vérifier toutes les 2 minutes plutôt qu'attendre, travailler jusqu'à ce qu'Adeh dise qu'il est revenu).
-Vérifie d'abord que le script d'environnement a tourné (ls target/debug/errance) ; sinon installe les libs listées dans PROCHAINE_SESSION.md (boucle de réessais en arrière-plan, le miroir Ubuntu renvoie parfois 504) puis lance cargo build -p errance_game en arrière-plan et vérifie toutes les 2 min. Vérifie aussi que la CI GitHub du dernier commit est verte (sinon corrige d'abord).
+Lis dans l'ordre : CLAUDE.md, docs/claude/METHODE.md, docs/claude/REFERENCE.md, docs/claude/IDEES_EN_ATTENTE.md, docs/claude/PROCHAINE_SESSION.md, et applique les « Consignes d'Adeh » (un fil par chantier, vérifier toutes les minutes plutôt qu'attendre, travailler jusqu'à ce qu'Adeh dise qu'il est revenu).
+Vérifie d'abord que le script d'environnement a tourné (ls target/debug/errance) ; sinon installe les libs listées dans PROCHAINE_SESSION.md (boucle de réessais en arrière-plan, le miroir Ubuntu renvoie parfois 504) puis lance cargo build -p errance_game en arrière-plan et vérifie toutes les minutes. Vérifie aussi que la CI GitHub du dernier commit est verte (sinon corrige d'abord).
 Fais le chantier « Collines Sourdes & réputation ». Adeh est absent : ne lui pose pas de questions, avance seul, et en fin de chantier passe le relais au fil suivant (create_session sur l'environnement env_012MCygdvnM7WLQmJSPkCmzt, même dépôt et branche) avec le prompt de relais mis à jour pour le chantier suivant.
 ```
