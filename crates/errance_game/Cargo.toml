@@ -22,6 +22,8 @@ wgpu = { version = "30", default-features = false, features = ["gles", "vulkan"]
 # Journal du moteur affiché dans le jeu (journal.rs).
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", default-features = false }
+# Presse-papiers Android (clipboard.rs).
+jni = "0.21"
 
 [target.'cfg(target_os = "android")'.dependencies]
 bevy = { workspace = true, features = ["3d", "ui", "audio", "wav", "android-game-activity"] }

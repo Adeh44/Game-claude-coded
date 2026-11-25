@@ -89,6 +89,33 @@ pub fn layer(_app: &mut App) -> Option<BoxedLayer> {
     Some(Box::new(JournalLayer))
 }
 
+/// Le rapport du dernier plantage (affiché sur l'écran titre).
+static CRASH: Mutex<Option<String>> = Mutex::new(None);
+
+pub fn set_crash(s: &str) {
+    if let Ok(mut c) = CRASH.lock() {
+        *c = Some(s.to_string());
+    }
+}
+
+/// Tout ce qu'il faut à Claude, en texte brut.
+pub fn report() -> String {
+    let mut r = format!("Rapport Errance (version {})\nÉtape : {}\n", env!("CARGO_PKG_VERSION"), crate::save::current_step());
+    if let Some(c) = CRASH.lock().ok().and_then(|c| c.clone()) {
+        let _ = writeln!(r, "Dernier plantage : {c}");
+    }
+    let _ = writeln!(r, "Moteur choisi : {}", crate::save::backend_label(&crate::save::backend()));
+    if let Ok(lines) = LINES.lock() {
+        if lines.is_empty() {
+            r.push_str("(aucune erreur ni alerte)\n");
+        }
+        for l in lines.iter() {
+            let _ = writeln!(r, "{l}");
+        }
+    }
+    r
+}
+
 #[derive(Component)]
 struct JournalText;
 
@@ -96,21 +123,43 @@ pub struct JournalPlugin;
 
 impl Plugin for JournalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_journal).add_systems(Update, show_journal);
+        app.add_systems(Startup, spawn_journal).add_systems(Update, (show_journal, copy_action));
     }
 }
 
 fn spawn_journal(mut commands: Commands, fonts: Res<crate::ui::Fonts>) {
-    commands.spawn((
-        Node { position_type: PositionType::Absolute, left: px(4), bottom: px(2), max_width: percent(70), padding: UiRect::all(px(3)), ..default() },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.75)),
-        GlobalZIndex(200),
-        Visibility::Hidden,
-        JournalText,
-        // Ne bloque pas les doigts : les boutons dessous restent utilisables.
-        bevy::picking::Pickable::IGNORE,
-        children![(Text::new(""), crate::ui::font(&fonts.regular, 8.0), TextColor(Color::srgb(1.0, 0.75, 0.6)), bevy::picking::Pickable::IGNORE)],
-    ));
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                left: px(4),
+                bottom: px(2),
+                max_width: percent(70),
+                padding: UiRect::all(px(3)),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::FlexStart,
+                row_gap: px(2),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.75)),
+            GlobalZIndex(200),
+            Visibility::Hidden,
+            JournalText,
+            // Ne bloque pas les doigts : les boutons dessous restent utilisables.
+            bevy::picking::Pickable::IGNORE,
+        ))
+        .with_children(|p| {
+            p.spawn(crate::ui::button_colored(&fonts, "Copier le journal pour Claude", crate::ui::UiAction::CopyJournal, px(190), 10.0, Color::srgb(0.25, 0.35, 0.55)));
+            p.spawn((Text::new(""), crate::ui::font(&fonts.regular, 8.0), TextColor(Color::srgb(1.0, 0.75, 0.6)), bevy::picking::Pickable::IGNORE));
+        });
+}
+
+fn copy_action(mut queue: ResMut<crate::ui::UiQueue>, mut toasts: ResMut<crate::Toasts>) {
+    if !queue.0.contains(&crate::ui::UiAction::CopyJournal) {
+        return;
+    }
+    queue.0.retain(|a| *a != crate::ui::UiAction::CopyJournal);
+    toasts.push(crate::clipboard::copy(&report()));
 }
 
 fn show_journal(mut seen: Local<usize>, mut q: Query<(&mut Visibility, &Children), With<JournalText>>, mut texts: Query<&mut Text>) {
@@ -123,7 +172,7 @@ fn show_journal(mut seen: Local<usize>, mut q: Query<(&mut Visibility, &Children
     *seen = lines.len();
     let Ok((mut v, children)) = q.single_mut() else { return };
     *v = if interesting { Visibility::Inherited } else { Visibility::Hidden };
-    if let Some(mut t) = children.first().and_then(|c| texts.get_mut(*c).ok()) {
+    if let Some(mut t) = children.last().and_then(|c| texts.get_mut(*c).ok()) {
         **t = lines.join("\n");
     }
 }

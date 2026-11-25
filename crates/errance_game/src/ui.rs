@@ -105,6 +105,8 @@ pub enum UiAction {
     SellResource(usize),
     // Titre
     ToggleBackend,
+    // Partout : copier le journal du moteur
+    CopyJournal,
     // Escalade
     ClimbPrompt,
     ClimbHold(u32),

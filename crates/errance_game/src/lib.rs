@@ -3,6 +3,7 @@
 
 pub mod audio;
 pub mod climb;
+pub mod clipboard;
 pub mod field;
 pub mod gather;
 pub mod journal;
@@ -152,6 +153,9 @@ fn build_title(mut commands: Commands, fonts: Res<Fonts>, mut report: Local<Opti
     let has_save = save::load().is_some();
     // Le rapport du dernier plantage n'est lu qu'une fois (au lancement).
     let crash = report.get_or_insert_with(save::take_crash_report).clone();
+    if let Some(c) = &crash {
+        journal::set_crash(c);
+    }
     commands
         .spawn((
             Node {
@@ -394,6 +398,10 @@ fn demo_driver(
                 _ => {}
             }
         }
+    }
+    // …:copy : appuie sur « Copier le journal ».
+    if parts.contains(&"copy") && *frame == 20 {
+        queue.0.push(UiAction::CopyJournal);
     }
     // chore:<id>:paid : après la corvée, toucher la paie, fermer, puis ouvrir le marché.
     if parts.first() == Some(&"chore") && parts.contains(&"paid") {
