@@ -61,6 +61,8 @@ pub struct Field {
     pub resources: Vec<errance_core::craft::ResourceStack>,
     /// Le héros a pris un coup cette image (interrompt la récolte).
     pub gather_hit: bool,
+    /// Le joueur a touché « Récolter » : la jauge avance tant qu'il reste à côté.
+    pub gather_on: bool,
     /// Mission de quête en cours (embuscade, objectif).
     pub mission: Option<errance_core::quest::MissionRun>,
     /// Barre rocheuse et voies d'escalade (Givrecol).
@@ -394,6 +396,7 @@ pub fn setup_field(
         gathering: Default::default(),
         resources: vec![],
         gather_hit: false,
+        gather_on: false,
         mission: mission_run,
         cliff: layout.cliff.clone(),
     });

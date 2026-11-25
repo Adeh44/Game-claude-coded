@@ -54,6 +54,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 
 ## Récolte & artisanat (v0.8)
 - Nœuds par zone (`nodes:` dans `zones.ron`) : Tree → bois, Vein → minerai, Herb → fibre ; les bêtes (famille `bete`) laissent une carcasse → peau. Tier = celui de la zone (25 % un cran dessous, 7 % un cran dessus), 3 à 5 unités.
+- Récolte au toucher (retour d'Adeh, 25/11) : près d'un nœud (1,9 m), un bouton « Toucher : Couper … » apparaît ; on le touche, la jauge monte tant qu'on reste à côté, jusqu'à vider le nœud. Un coup reçu fait lâcher (retoucher). Chaque nœud a un cercle lumineux au sol (couleur de la ressource) pour le distinguer du décor.
 - Rester à moins de 1,9 m : la jauge monte (1,3 s × (1 + 0,2 × (tier-1)) / (1 + 2 % × niveau)). Un coup reçu la remet à zéro. Récolte niv. requis = même échelle que l'équipement (T2:4, T3:12…).
 - Gloire de Récolte : 5 × multiplicateur de tier par unité. Rendement : +1 % de chances d'une unité bonus par niveau.
 - Ressources : réserve à part (`Profile.resources`), pas de place au sac. Perdues si on tombe, gardées en mode porteur.

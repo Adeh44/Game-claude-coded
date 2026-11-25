@@ -18,6 +18,8 @@ use errance_core::look::Rgb;
 pub struct NodeView {
     pub root: Entity,
     pub marker: Entity,
+    /// Cercle lumineux au sol : « ceci se récolte ».
+    pub ring: Entity,
 }
 
 #[derive(Component)]
@@ -97,10 +99,10 @@ pub fn spawn_node(p: &mut Painter, cmd: &mut Commands, n: &ResNode, zone_foliage
             e
         }
     };
-    // Repère : un petit losange qui flotte au-dessus.
+    // Repère : un petit losange qui flotte au-dessus (assez bas pour rester à l'écran).
     let h = match n.kind {
-        NodeKind::Tree => 4.3,
-        NodeKind::Vein => 1.6,
+        NodeKind::Tree => 2.4,
+        NodeKind::Vein => 1.7,
         _ => 1.2,
     };
     let marker = cmd
@@ -112,10 +114,21 @@ pub fn spawn_node(p: &mut Painter, cmd: &mut Commands, n: &ResNode, zone_foliage
         .id();
     let m = p.lib.ico.clone();
     p.part(cmd, marker, &m, (1.0, 0.9, 0.5), Finish::Glow, Transform::default());
+    // Cercle au sol, couleur de la ressource : distingue un arbre à couper d'un arbre de décor.
+    let ring_mesh = p.lib.ring.clone();
+    let ring_mat = p.mat(rc, Finish::Glow);
+    let ring = cmd
+        .spawn((
+            Mesh3d(ring_mesh),
+            MeshMaterial3d(ring_mat),
+            Transform::from_translation(at + Vec3::Y * 0.03).with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)).with_scale(Vec3::splat(if n.kind == NodeKind::Tree || n.kind == NodeKind::Vein { 1.1 } else { 0.75 })),
+        ))
+        .id();
     let scope = DespawnOnExit(AppState::Field);
     cmd.entity(root).insert(scope.clone());
-    cmd.entity(marker).insert(scope);
-    NodeView { root, marker }
+    cmd.entity(marker).insert(scope.clone());
+    cmd.entity(ring).insert(scope);
+    NodeView { root, marker, ring }
 }
 
 fn bob_markers(time: Res<Time>, mut q: Query<(&Marker, &mut Transform)>) {
@@ -129,6 +142,10 @@ fn bob_markers(time: Res<Time>, mut q: Query<(&Marker, &mut Transform)>) {
 fn build_gather_bar(mut commands: Commands, fonts: Res<Fonts>) {
     commands
         .spawn((
+            bevy::ui_widgets::Button,
+            crate::ui::UiAction::Gather,
+            crate::ui::ButtonLook { normal: Color::srgba(0.12, 0.2, 0.1, 0.85), pressed: pal::BUTTON_ON },
+            BackgroundColor(Color::srgba(0.12, 0.2, 0.1, 0.85)),
             Node {
                 position_type: PositionType::Absolute,
                 bottom: px(168),
@@ -138,6 +155,8 @@ fn build_gather_bar(mut commands: Commands, fonts: Res<Fonts>) {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 row_gap: px(2),
+                padding: UiRect::all(px(4)),
+                border_radius: BorderRadius::all(px(6)),
                 ..default()
             },
             Visibility::Hidden,
@@ -175,8 +194,12 @@ fn gather_step(
     mut bar: Query<&mut Visibility, With<GatherBar>>,
     mut fill: Query<&mut Node, With<GatherFill>>,
     mut label: Query<(&mut Text, &mut TextColor), With<GatherLabel>>,
+    mut queue: ResMut<crate::ui::UiQueue>,
 ) {
     let Some(mut field) = field else { return };
+    // Le joueur touche le bouton : on commence à récolter le nœud le plus proche.
+    let tapped = queue.0.contains(&crate::ui::UiAction::Gather);
+    queue.0.retain(|a| *a != crate::ui::UiAction::Gather);
     let c = content();
     let mut show = false;
     let mut frac = 0.0;
@@ -187,11 +210,32 @@ fn gather_step(
         if let Some((true, pos)) = alive {
             if std::mem::take(&mut field.gather_hit) {
                 field.gathering.interrupt();
+                // Un coup reçu fait lâcher l'outil : il faudra retoucher le bouton.
+                field.gather_on = false;
             }
             let lvl = game.0.hero.masteries.level(LINE_GATHER);
             let dt = time.delta_secs();
+            let near = errance_core::craft::nearest_node(&field.nodes, pos);
+            if tapped && near.is_some() {
+                field.gather_on = true;
+            }
             let f = &mut *field;
-            let tick = f.gathering.tick(&mut f.nodes, pos, dt, lvl, &mut f.rng);
+            // Sans appui : on montre seulement ce qu'on pourrait récolter.
+            let tick = if f.gather_on {
+                f.gathering.tick(&mut f.nodes, pos, dt, lvl, &mut f.rng)
+            } else {
+                f.gathering = Default::default();
+                match near {
+                    None => GatherTick::Idle,
+                    Some(i) => {
+                        let need = errance_core::craft::gather_level_for(f.nodes[i].tier);
+                        if lvl < need { GatherTick::TooHard { node: i, need } } else { GatherTick::Working { node: i, frac: -1.0 } }
+                    }
+                }
+            };
+            if matches!(tick, GatherTick::Idle | GatherTick::TooHard { .. }) {
+                f.gather_on = false;
+            }
             if std::env::var("ERRANCE_DEBUG_GATHER").is_ok() {
                 let d = f.nodes.iter().map(|n| n.pos.distance(pos)).fold(f32::MAX, f32::min);
                 eprintln!("GATHER {tick:?} nearest={d:.2}");
@@ -202,8 +246,14 @@ fn gather_step(
                 GatherTick::Working { node, frac: fr } => {
                     let n = &field.nodes[node];
                     show = true;
-                    frac = fr;
-                    text = format!("{} : {} (T{})", n.kind.verb(), name_of(n), n.tier);
+                    if fr < 0.0 {
+                        // Pas encore commencé : le bouton invite à toucher.
+                        frac = 0.0;
+                        text = format!("Toucher : {} {} (T{})", n.kind.verb(), name_of(n), n.tier);
+                    } else {
+                        frac = fr;
+                        text = format!("{} : {} (T{})", n.kind.verb(), name_of(n), n.tier);
+                    }
                 }
                 GatherTick::TooHard { node, need } => {
                     let n = &field.nodes[node];
@@ -224,8 +274,10 @@ fn gather_step(
                         game.0.hero.fix_loadout(c);
                     }
                     if n.left == 0 {
+                        field.gather_on = false;
                         if let Some(v) = field.node_views.get(node) {
                             commands.entity(v.marker).despawn();
+                            commands.entity(v.ring).despawn();
                             // Les plantes et les carcasses disparaissent ; arbres et rochers restent.
                             if matches!(kind, NodeKind::Herb | NodeKind::Carcass) {
                                 commands.entity(v.root).despawn();

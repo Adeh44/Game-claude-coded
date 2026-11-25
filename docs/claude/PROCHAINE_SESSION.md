@@ -9,6 +9,7 @@
 - Libs : `libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev libxkbcommon-x11-0 xvfb xdotool imagemagick pkg-config mesa-vulkan-drivers libgl1-mesa-dri` (miroir Ubuntu parfois en 504 : boucle de réessais).
 - 23/11 : premier test d'Adeh sur téléphone (Redmi, Android 16). 1) Plantage après « Nouvelle partie » : bug wgpu-hal + pilote Vulkan (`ERROR_FRAGMENTED_POOL`), patch dans `vendor/wgpu-hal`. 2) Ensuite plus de plantage mais la 3D ne s'affichait pas (écran jamais effacé). Essai OpenGL ES : plante au démarrage (le garde-fou a rebasculé sur Vulkan). Bindless désactivé (24/11) : pas suffisant. Journal du moteur + bouton copier (25/11) : aucune erreur, GPU Mali-G57 MC2. Vraie cause trouvée : MSAA différent entre caméra 3D et caméra d'interface (voir METHODE). Corrigé le 25/11, à confirmer par Adeh.
 - Adeh pensait pouvoir marcher en ville : la ville est un diorama + menu (idée « ville marchable » en attente). Il l'a remarqué tout de suite : à remonter dans les priorités ?
+- 25/11 : LE JEU S'AFFICHE sur le téléphone d'Adeh. Ses retours : récolte au toucher (fait), repère des éléments récoltables (fait : cercle au sol), sac vide pendant l'expédition (fait : section « Dans vos poches »), panneau des sorts (fait : « Vos sorts » dans la Fiche). Restent : interface qui fait « placeholder », monde vide (herbe, monstres), personnages et animations embryonnaires → chantiers à proposer.
 - À tester ensuite : le panneau d'escalade au doigt (taille des prises, lisibilité).
 
 ## Consignes d'Adeh (valables jusqu'à nouvel ordre)

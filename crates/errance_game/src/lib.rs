@@ -439,6 +439,10 @@ fn demo_driver(
                 h.pos = np + errance_core::math::Vec2::new(0.0, 1.2);
             }
         }
+        if parts.contains(&"gather") && *frame == 13 && !parts.contains(&"notap") {
+            // La récolte se lance au toucher.
+            queue.0.push(UiAction::Gather);
+        }
         if parts.contains(&"ambush") && *frame == 12 {
             // Le héros s'avance jusqu'à la ligne de l'embuscade.
             let hero = f.hero;

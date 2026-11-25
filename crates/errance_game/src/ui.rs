@@ -107,6 +107,8 @@ pub enum UiAction {
     ToggleBackend,
     // Partout : copier le journal du moteur
     CopyJournal,
+    // Récolte (toucher pour récolter le nœud proche)
+    Gather,
     // Escalade
     ClimbPrompt,
     ClimbHold(u32),

@@ -393,6 +393,7 @@ fn rebuild_panel(
     game: Option<Res<Game>>,
     state: Res<State<AppState>>,
     climb: Option<Res<crate::climb::ClimbRun>>,
+    field: Option<Res<Field>>,
 ) {
     if !ov.is_changed() && !menu.dirty {
         return;
@@ -445,7 +446,7 @@ fn rebuild_panel(
     commands.entity(root).add_child(body);
     let p = &game.0;
     match panel {
-        Panel::Bag => build_bag(&mut commands, body, &fonts, p, &menu, in_town),
+        Panel::Bag => build_bag(&mut commands, body, &fonts, p, &menu, in_town, field.as_deref()),
         Panel::Character => build_character(&mut commands, body, &fonts, p, &menu),
         Panel::Atlas => build_atlas(&mut commands, body, &fonts, p, &menu),
         Panel::Summary => build_summary(&mut commands, body, &fonts, &menu),
@@ -563,7 +564,7 @@ pub fn item_details(c: &mut ChildSpawnerCommands, fonts: &Fonts, p: &errance_cor
     c.spawn(ui::label(fonts, format!("Valeur : {} po", item_value(it)), 10.5, pal::GOLD));
 }
 
-fn build_bag(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_core::profile::Profile, menu: &MenuState, in_town: bool) {
+fn build_bag(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_core::profile::Profile, menu: &MenuState, in_town: bool, field: Option<&Field>) {
     let c = content();
     commands.entity(body).with_children(|b| {
         // Équipement porté.
@@ -589,6 +590,22 @@ fn build_bag(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &errance_c
             for (i, it) in p.bag.iter().enumerate() {
                 let slot = c.base(&it.base).map(|b| b.slot.label()).unwrap_or("");
                 col.spawn(item_row(fonts, it, UiAction::SelectBag(i), menu.bag_sel == Some(i), slot.to_string()));
+            }
+            // En expédition : ce qu'on a ramassé n'est à soi qu'une fois rentré au camp.
+            if let Some(f) = field.filter(|f| !f.resources.is_empty() || !f.loot.is_empty() || f.gold > 0) {
+                col.spawn(ui::bold(fonts, "Dans vos poches (perdu si vous tombez)", 12.0, pal::GOLD));
+                if f.gold > 0 {
+                    col.spawn(ui::label(fonts, format!("{} po", f.gold), 11.0, pal::GOLD));
+                }
+                for it in &f.loot {
+                    col.spawn(ui::label(fonts, item_name(c, it), 11.0, rgb(it.quality.color())));
+                }
+                for r in &f.resources {
+                    if let Some(d) = c.resource(&r.id) {
+                        col.spawn(ui::label(fonts, format!("T{} {} ×{}", r.tier, d.tier_name(r.tier), r.count), 11.0, rgb(d.color)));
+                    }
+                }
+                col.spawn(ui::label(fonts, "Rentrez au feu de camp pour les garder.", 10.0, pal::DIM));
             }
             if !p.resources.is_empty() {
                 col.spawn(ui::bold(fonts, "Ressources (pour l'atelier)", 12.0, pal::INK));
@@ -732,7 +749,47 @@ fn build_character(commands: &mut Commands, body: Entity, fonts: &Fonts, p: &err
                     }
                 }
                 None => {
-                    col.spawn(ui::label(fonts, "Ici, pas de classe : ce que vous portez décide de vos skills.\nL'arme donne 3 skills, la tête, le torse et les pieds 1 chacun.\nLes talents s'ajoutent par-dessus. Mage en plaques ? Pourquoi pas.", 11.5, pal::DIM));
+                    // Vos sorts : ce que le personnage sait faire en ce moment, décrit en entier.
+                    col.spawn(ui::bold(fonts, "Vos sorts", 13.0, pal::GOLD));
+                    let spec = h.fighter_spec(c, Team::Ally, Controller::Player);
+                    let mut any = false;
+                    for slot in [SkillSlot::Basic, SkillSlot::Weapon1, SkillSlot::Weapon2, SkillSlot::Weapon3, SkillSlot::Head, SkillSlot::Chest, SkillSlot::Feet, SkillSlot::Potion] {
+                        let Some(s) = spec.skills.get(slot.bar_index()).and_then(|x| x.as_ref()) else { continue };
+                        any = true;
+                        let equip = match slot {
+                            SkillSlot::Basic | SkillSlot::Weapon1 | SkillSlot::Weapon2 | SkillSlot::Weapon3 => EquipSlot::MainHand,
+                            SkillSlot::Head => EquipSlot::Head,
+                            SkillSlot::Chest => EquipSlot::Chest,
+                            SkillSlot::Feet => EquipSlot::Feet,
+                            SkillSlot::Potion => EquipSlot::Potion,
+                        };
+                        let source = h.item(equip).map(|it| item_name(c, it)).unwrap_or_else(|| match slot {
+                            SkillSlot::Head | SkillSlot::Chest | SkillSlot::Feet => "sans armure".into(),
+                            SkillSlot::Potion => "aucune potion".into(),
+                            _ => "mains nues".into(),
+                        });
+                        let mut lines = vec![s.description.clone()];
+                        lines.extend(s.effect_lines());
+                        let meta = if slot == SkillSlot::Basic {
+                            "Automatique, sur la cible".to_string()
+                        } else {
+                            format!("Coût {} · Recharge {} s{}", s.cost, s.cooldown, if s.cast_time > 0.0 { format!(" · Incantation {} s", s.cast_time) } else { String::new() })
+                        };
+                        col.spawn((
+                            Node { padding: UiRect::all(px(5)), border_radius: BorderRadius::all(px(4)), flex_direction: FlexDirection::Column, ..default() },
+                            BackgroundColor(pal::PANEL_LIGHT),
+                            children![
+                                (Text::new(format!("{} — {}", slot.label(), s.name)), font(&fonts.bold, 12.0), TextColor(crate::hud::skill_color(s).lighter(0.25))),
+                                (Text::new(format!("Vient de : {source}")), font(&fonts.regular, 9.5), TextColor(pal::DIM)),
+                                (Text::new(lines.join("\n")), font(&fonts.regular, 10.5), TextColor(pal::INK)),
+                                (Text::new(meta), font(&fonts.regular, 10.0), TextColor(Color::srgb(0.7, 0.8, 1.0))),
+                            ],
+                        ));
+                    }
+                    if !any {
+                        col.spawn(ui::label(fonts, "Aucun sort pour l'instant.", 11.0, pal::DIM));
+                    }
+                    col.spawn(ui::label(fonts, "Pas de classe : ce que vous portez décide de vos sorts. L'arme en donne 3, la tête, le torse et les pieds 1 chacun. Touchez un emplacement à gauche pour en changer.", 10.0, pal::DIM));
                 }
             }
         });
