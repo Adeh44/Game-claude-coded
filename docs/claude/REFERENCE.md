@@ -46,6 +46,7 @@ RPG solo mobile (Android, paysage), monde de fantasy médiévale « sandbox » :
 - `gather.rs` : nœuds de récolte en 3D (arbre entaillé, filon brillant, touffe de plantes, carcasse) + repère flottant + jauge au-dessus des skills.
 - `climb.rs` : barre rocheuse 3D, bouton Grimper / Rappel, panneau de la paroi (prises à toucher, jauges, pitons).
 - `workshop.rs` : panneau Atelier du forgeron (réserve, recettes par tier, détail + Forger, vente des ressources).
+- `scenery.rs` : habillage du sol des expéditions (herbe fusionnée en 16 maillages à couleurs par sommet, fleurs, buissons, cailloux, chemin du camp vers le nord, neige / braises / champignons selon la zone). Purement visuel.
 - `town.rs` : diorama de Gué-Rouge + menu ville. `menus.rs` : tous les panneaux. `minigames.rs` : 4 corvées. `save.rs` : sauvegarde auto (20 s + mise en arrière-plan).
 - Interface dessinée pour 420 px de haut puis mise à l'échelle (`UiScale`).
 

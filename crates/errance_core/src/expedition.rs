@@ -283,6 +283,7 @@ mod tests {
             let mut rng = Rng::new(3);
             let l = layout_zone(z, &mut rng);
             assert!(!l.packs.is_empty(), "{} sans monstres", z.id);
+            assert_eq!(l.packs.len(), z.pack_count as usize, "{} : tous les groupes doivent trouver leur place", z.id);
             assert!(l.decor.len() > 10);
             for (p, _) in &l.packs {
                 assert!(p.distance(l.start) >= 12.0);

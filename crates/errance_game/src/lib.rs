@@ -12,6 +12,7 @@ pub mod menus;
 pub mod minigames;
 pub mod models;
 pub mod save;
+pub mod scenery;
 pub mod town;
 pub mod ui;
 pub mod workshop;

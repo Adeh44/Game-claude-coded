@@ -275,15 +275,8 @@ pub fn setup_field(
             scope.clone(),
         ));
     }
-    // Touffes d'herbe.
-    for _ in 0..(if light { 110 } else { 260 }) {
-        let x = rng.range_f32(-layout.half, layout.half);
-        let z = rng.range_f32(-layout.half, layout.half);
-        let cone = painter.lib.cone4.clone();
-        let m = painter.mat(zone.foliage, Finish::Matte);
-        let h = rng.range_f32(0.15, 0.35);
-        commands.spawn((Mesh3d(cone), MeshMaterial3d(m), Transform::from_xyz(x, h / 2.0, z).with_scale(Vec3::new(0.12, h, 0.12)), scope.clone()));
-    }
+    // Herbe, fleurs, buissons, cailloux, chemin (scenery.rs).
+    crate::scenery::dress(&mut painter, &mut commands, &mut meshes, &layout, &zone, &mut rng, scope.clone());
     // Décor.
     for (pos, _, kind, scale) in &layout.decor {
         let rot = rng.range_f32(0.0, std::f32::consts::TAU);
